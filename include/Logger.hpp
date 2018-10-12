@@ -7,11 +7,11 @@
 #include <string>
 #include <ctime>
 #include <iostream>
+#include <vector>
 
-#include <utils/logger/Constants.h>
-#include <utils/logger/outputHandler/OutputHandler.h>
-#include <utils/logger/Logger.h>
-#include <utils/logger/outputHandler/Stdio.h>
+#include <Constants.h>
+#include <outputHandler/OutputHandler.h>
+#include <outputHandler/Stdio.h>
 
 namespace log {
 
