@@ -13,7 +13,8 @@
 #include <outputHandler/OutputHandler.h>
 #include <outputHandler/Stdio.h>
 
-namespace log {
+namespace jlog {
+#define LOG Logger::getInstance
 
   /**
    * Logging class 
@@ -23,8 +24,8 @@ namespace log {
     public:
       typedef std::ostream& (*ManipFn)(std::ostream&);
       typedef std::ios_base& (*FlagsFn)(std::ios_base&);
-      const std::string separator = "------------------------------";
-      const std::string end = "                                                                             □ ";
+      const std::string separator = "-----------------------------";
+      const std::string end = "                                                                              □ ";
 
       /*
        * delete, copy, move constructors and assign operators
@@ -39,9 +40,8 @@ namespace log {
       }
 
       static Logger& getInstance(LogLevel e) {
-        static Logger instance;
-        instance.logLevelCurrentMessage = e;
-        return instance;
+        Logger::getInstance().logLevelCurrentMessage = e;
+        return Logger::getInstance();
       }
 
       /*
@@ -101,6 +101,9 @@ namespace log {
         std::stringstream pre;
         pre << separator;
         switch (this->logLevelCurrentMessage) {
+          case DEBUG: 
+            pre << "DEBUG";
+            break;
           case INFO: 
             pre << "INFO ";
             break;
@@ -123,11 +126,13 @@ namespace log {
             // ensure to exit
             this->logLevelCurrentMessage  = NEVER;
         }
-        //prepend current time. 
+        //prepend current time.
         auto now = std::time(0);
         auto local = std::localtime(&now);
-        pre << local->tm_mday << "." << (local->tm_mon + 1) << ' '
-          << local->tm_hour << ":" << local->tm_min << ":" << local->tm_sec;
+        this->msg = (this->msg + 1) % 100;
+        pre <<  " " <<local->tm_mday << "." << (local->tm_mon + 1) << ' '
+          << local->tm_hour << ":" << local->tm_min << ":" << local->tm_sec
+            << "." << (msg < 10 ? " " : "")  << msg;
 
 
         // append the message. 
@@ -177,6 +182,7 @@ namespace log {
 
       Logger(): logLevelCurrentMessage(INFO), logLevel(INFO), exitLevel(ERROR) {
         out = new outputHandler::Stdio();
+        this->msg = 0;
       }
 
       virtual ~Logger() {
@@ -200,15 +206,20 @@ namespace log {
        */
       LogLevel exitLevel;
 
-      /*
+      /**
        * Stream for the current log message.
        */
       std::stringstream sstream;
 
-      /*
+      /**
        *  Output handler that is currently applied.
-       */  
+       */
       outputHandler::OutputHandler* out;
+
+      /**
+       * Message counter.
+       */
+      uint64_t msg;
   };
 }
 

@@ -3,11 +3,13 @@
 
 #include <outputHandler/Stdio.h>
 
-void log::outputHandler::Stdio::handle(
-    std::string st, log::LogLevel msgLogLevel) {
-  if (msgLogLevel >= log::WARN)  std::cerr << st;
+void jlog::outputHandler::Stdio::handle(
+    std::string st, jlog::LogLevel msgLogLevel) {
+  if (msgLogLevel >= jlog::WARN) std::cerr << st;
   else std::cout << st;
+  std::cout << std::flush;
+  std::cerr << std::flush;
 }
 
-log::outputHandler::Stdio::Stdio(){}
-log::outputHandler::Stdio::~Stdio(){}
+jlog::outputHandler::Stdio::Stdio(){}
+jlog::outputHandler::Stdio::~Stdio(){}

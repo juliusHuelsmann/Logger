@@ -1,16 +1,17 @@
-#ifndef _LOG_CONST_H
-#define _LOG_CONST_H
+#ifndef _LOG_CONST_H_
+#define _LOG_CONST_H_
 
-namespace log  {
+namespace jlog  {
 
   enum LogLevel {
-    INFO=0,
-    WARN=1,
-    ERROR=2,
-    FATAL=3,
-    NEVER=4
+    DEBUG=0,
+    INFO=1,
+    WARN=2,
+    ERROR=3,
+    FATAL=4,
+    NEVER=5
   };
 }
 
-#endif // _LOG_CONST_H
+#endif // _LOG_CONST_H_
 
