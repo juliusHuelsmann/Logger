@@ -174,7 +174,7 @@ namespace jlog {
        * by the logger.
        */
       void setStreamMethod(outputHandler::OutputHandler* out) {
-        if (out) delete(out);
+        if (this->out) delete(this->out);
         this->out = out;
       }
 
