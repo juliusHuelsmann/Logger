@@ -3,7 +3,7 @@
 
 #include <outputHandler/OutputHandler.h>
 
-namespace log {
+namespace jlog {
   namespace outputHandler {
     class Stdio : public OutputHandler {
 

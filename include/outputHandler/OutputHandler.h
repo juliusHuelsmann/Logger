@@ -4,7 +4,7 @@
 
 #include <Constants.h>
 
-namespace log {
+namespace jlog {
   namespace outputHandler {
     class OutputHandler {
 
