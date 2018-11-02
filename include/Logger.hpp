@@ -95,59 +95,60 @@ namespace jlog {
        */
       void flush() {
 
-        // Check if the message is to be looged.
-        if (this->logLevelCurrentMessage < this->logLevel) return;
+        // Check if the message is to be logged.
+        if (this->logLevelCurrentMessage >= this->logLevel) {
 
-        std::stringstream pre;
-        pre << separator;
-        switch (this->logLevelCurrentMessage) {
-          case DEBUG: 
-            pre << "DEBUG";
-            break;
-          case INFO: 
-            pre << "INFO ";
-            break;
-          case WARN:
-            pre << "WARN ";
-            break;
-          case ERROR:
-            pre << "ERROR";
-            break;
-          case FATAL:
-            pre << "FATAL";
-            break;
-          case NEVER: 
-          default:
-            pre << "Fatal error occurred while logging a message: "
-              << " Log level of message corrupted : " 
-              << this->logLevelCurrentMessage  
-              << "\n\nOriginal message:\n";
+          std::stringstream pre;
+          pre << separator;
+          switch (this->logLevelCurrentMessage) {
+            case DEBUG:
+              pre << "DEBUG";
+              break;
+            case INFO:
+              pre << "INFO ";
+              break;
+            case WARN:
+              pre << "WARN ";
+              break;
+            case ERROR:
+              pre << "ERROR";
+              break;
+            case FATAL:
+              pre << "FATAL";
+              break;
+            case NEVER:
+            default:
+              pre << "Fatal error occurred while logging a message: "
+                  << " Log level of message corrupted : "
+                  << this->logLevelCurrentMessage
+                  << "\n\nOriginal message:\n";
 
-            // ensure to exit
-            this->logLevelCurrentMessage  = NEVER;
-        }
-        //prepend current time.
-        auto now = std::time(0);
-        auto local = std::localtime(&now);
-        this->msg = (this->msg + 1) % 100;
-        pre <<  " " <<local->tm_mday << "." << (local->tm_mon + 1) << ' '
-          << local->tm_hour << ":" << local->tm_min << ":" << local->tm_sec
-            << "." << (msg < 10 ? " " : "")  << msg;
+              // ensure to exit
+              this->logLevelCurrentMessage  = NEVER;
+          }
+          //prepend current time.
+          auto now = std::time(0);
+          auto local = std::localtime(&now);
+          this->msg = (this->msg + 1) % 100;
+          pre <<  " " <<local->tm_mday << "." << (local->tm_mon + 1) << ' '
+              << local->tm_hour << ":" << local->tm_min << ":" << local->tm_sec
+              << "." << (msg < 10 ? " " : "")  << msg;
 
 
-        // append the message. 
-        pre << separator << "\n" << sstream.str() << "\n" << end << "\n";
+          // append the message.
+          pre << separator << "\n" << sstream.str() << "\n" << end << "\n";
 
-        out->handle(pre.str(), logLevelCurrentMessage);
+          out->handle(pre.str(), logLevelCurrentMessage);
 
-        // Check if the program has to exit according to the log level
-        if (this->logLevelCurrentMessage >= this->exitLevel) {
+          // Check if the program has to exit according to the log level
+          if (this->logLevelCurrentMessage >= this->exitLevel) {
 
-          std::stringstream error;
-          error << "\n The logger-exit level is set to exit on messages of level " 
-            << this->exitLevel << " or higher. \n Bye!\n";
-          out->handle(error.str(), INFO);
-          std::exit(-1);
+            std::stringstream error;
+            error << "\n The logger-exit level is set to exit on messages of level "
+                  << this->exitLevel << " or higher. \n Bye!\n";
+            out->handle(error.str(), INFO);
+            std::exit(-1);
+          }
         }
 
         // reset the standard log level to INFO (in case no log level is explicitely
