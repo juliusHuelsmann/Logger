@@ -34,3 +34,5 @@
 
 build
 *.swp
+.idea
+cmake-build-debug

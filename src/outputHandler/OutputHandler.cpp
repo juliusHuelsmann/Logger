@@ -1,7 +1,7 @@
 
-#include <iostream>
-
 #include <outputHandler/OutputHandler.h>
+
+#include <iostream>
 
 void jlog::outputHandler::OutputHandler::handle(
     std::string st, jlog::LogLevel msgLogLevel) {

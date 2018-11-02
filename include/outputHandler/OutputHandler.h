@@ -4,6 +4,8 @@
 
 #include <Constants.h>
 
+#include<string>
+
 namespace jlog {
   namespace outputHandler {
     class OutputHandler {

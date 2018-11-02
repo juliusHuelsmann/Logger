@@ -4,10 +4,6 @@ project(logger VERSION 0.0.1.1 LANGUAGES CXX)
 
 
 
-file(GLOB_RECURSE SRC ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/include/*.hpp)
-add_library(logger ${SRC})
-
-
 # Check for the ZMQ module. If found, build the code with ZMQ support.
 find_package(PkgConfig REQUIRED)
 
@@ -24,7 +20,7 @@ if (${PKG_CONFIG_FOUND})
   if(DEFINED ZeroMQ_INCLUDE_DIR AND DEFINED ZeroMQ_LIBRARY)
 
     message("ZMQ (optional): \tok -- Building ${PROJECT_NAME} with ZMQ support!")
-    target_compile_definitions(logger INTERFACE HAVE_ZMQ)
+    set(PUBLIC_COMPILE FOUND_ZMQ="true")
 
   else()
     message("ZMQ (optional):  \tmissing -- Building ${PROJECT_NAME} WITHOUT ZMQ support!")
@@ -33,10 +29,12 @@ if (${PKG_CONFIG_FOUND})
   endif()
 else()
   message("PkgConfig (optional):\tmissing")
-
 endif()
 
 # Build the libraries
+file(GLOB_RECURSE SRC ${PROJECT_SOURCE_DIR}/src/*.cpp)
+add_library(logger ${SRC})
+target_compile_definitions(logger PUBLIC ${PUBLIC_COMPILE})
 target_include_directories(logger PUBLIC ${PROJECT_SOURCE_DIR}/include PRIVATE ${ZeroMQ_INCLUDE_DIR})
 target_link_libraries(logger PRIVATE ${ZeroMQ_LIBRARY})
 

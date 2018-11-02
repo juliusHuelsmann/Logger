@@ -1,6 +1,9 @@
 #ifndef _LOGGER_H_
 #define _LOGGER_H_
 
+#include <Constants.h>
+#include <outputHandler/OutputHandler.h>
+#include <outputHandler/Stdio.h>
 
 #include <iostream>
 #include <sstream>
@@ -9,11 +12,8 @@
 #include <iostream>
 #include <vector>
 
-#include <Constants.h>
-#include <outputHandler/OutputHandler.h>
-#include <outputHandler/Stdio.h>
-
-namespace log {
+namespace jlog {
+#define LOG Logger::getInstance
 
   /**
    * Logging class 
@@ -23,8 +23,8 @@ namespace log {
     public:
       typedef std::ostream& (*ManipFn)(std::ostream&);
       typedef std::ios_base& (*FlagsFn)(std::ios_base&);
-      const std::string separator = "------------------------------";
-      const std::string end = "                                                                             □ ";
+      const std::string separator = "-----------------------------";
+      const std::string end = "                                                                              □ ";
 
       /*
        * delete, copy, move constructors and assign operators
@@ -39,9 +39,8 @@ namespace log {
       }
 
       static Logger& getInstance(LogLevel e) {
-        static Logger instance;
-        instance.logLevelCurrentMessage = e;
-        return instance;
+        Logger::getInstance().logLevelCurrentMessage = e;
+        return Logger::getInstance();
       }
 
       /*
@@ -95,54 +94,60 @@ namespace log {
        */
       void flush() {
 
-        // Check if the message is to be looged.
-        if (this->logLevelCurrentMessage < this->logLevel) return;
+        // Check if the message is to be logged.
+        if (this->logLevelCurrentMessage >= this->logLevel) {
 
-        std::stringstream pre;
-        pre << separator;
-        switch (this->logLevelCurrentMessage) {
-          case INFO: 
-            pre << "INFO ";
-            break;
-          case WARN:
-            pre << "WARN ";
-            break;
-          case ERROR:
-            pre << "ERROR";
-            break;
-          case FATAL:
-            pre << "FATAL";
-            break;
-          case NEVER: 
-          default:
-            pre << "Fatal error occurred while logging a message: "
-              << " Log level of message corrupted : " 
-              << this->logLevelCurrentMessage  
-              << "\n\nOriginal message:\n";
+          std::stringstream pre;
+          pre << separator;
+          switch (this->logLevelCurrentMessage) {
+            case DEBUG:
+              pre << "DEBUG";
+              break;
+            case INFO:
+              pre << "INFO ";
+              break;
+            case WARN:
+              pre << "WARN ";
+              break;
+            case ERROR:
+              pre << "ERROR";
+              break;
+            case FATAL:
+              pre << "FATAL";
+              break;
+            case NEVER:
+            default:
+              pre << "Fatal error occurred while logging a message: "
+                  << " Log level of message corrupted : "
+                  << this->logLevelCurrentMessage
+                  << "\n\nOriginal message:\n";
 
-            // ensure to exit
-            this->logLevelCurrentMessage  = NEVER;
-        }
-        //prepend current time. 
-        auto now = std::time(0);
-        auto local = std::localtime(&now);
-        pre << local->tm_mday << "." << (local->tm_mon + 1) << ' '
-          << local->tm_hour << ":" << local->tm_min << ":" << local->tm_sec;
+              // ensure to exit
+              this->logLevelCurrentMessage  = NEVER;
+          }
+          //prepend current time.
+          auto now = std::time(0);
+          auto local = std::localtime(&now);
+          this->msg = (this->msg + 1) % 100;
+          pre <<  " " <<local->tm_mday << "." << (local->tm_mon + 1) << ' '
+              << local->tm_hour << ":" << local->tm_min << ":" << local->tm_sec
+              << "." << (msg < 10 ? " " : "")  << msg;
 
 
-        // append the message. 
-        pre << separator << "\n" << sstream.str() << "\n" << end << "\n";
+          // append the message.
+          pre << separator << "\n" << sstream.str() << "\n" << end << "\n";
 
-        out->handle(pre.str(), logLevelCurrentMessage);
+          out->handle(pre.str(), logLevelCurrentMessage);
 
-        // Check if the program has to exit according to the log level
-        if (this->logLevelCurrentMessage >= this->exitLevel) {
+          // Check if the program has to exit according to the log level
+          if (this->logLevelCurrentMessage >= this->exitLevel) {
 
-          std::stringstream error;
-          error << "\n The logger-exit level is set to exit on messages of level " 
-            << this->exitLevel << " or higher. \n Bye!\n";
-          out->handle(error.str(), INFO);
-          std::exit(-1);
+            std::stringstream error;
+            error << "\n The logger-exit level is set to exit on messages of level "
+                  << this->exitLevel << " or higher. \n Bye!\n";
+            out->handle(error.str(), INFO);
+            std::exit(-1);
+          }
         }
 
         // reset the standard log level to INFO (in case no log level is explicitely
@@ -169,7 +174,7 @@ namespace log {
        * by the logger.
        */
       void setStreamMethod(outputHandler::OutputHandler* out) {
-        if (out) delete(out);
+        if (this->out) delete(this->out);
         this->out = out;
       }
 
@@ -177,6 +182,7 @@ namespace log {
 
       Logger(): logLevelCurrentMessage(INFO), logLevel(INFO), exitLevel(ERROR) {
         out = new outputHandler::Stdio();
+        this->msg = 0;
       }
 
       virtual ~Logger() {
@@ -200,15 +206,20 @@ namespace log {
        */
       LogLevel exitLevel;
 
-      /*
+      /**
        * Stream for the current log message.
        */
       std::stringstream sstream;
 
-      /*
+      /**
        *  Output handler that is currently applied.
-       */  
+       */
       outputHandler::OutputHandler* out;
+
+      /**
+       * Message counter.
+       */
+      uint64_t msg;
   };
 }
 
