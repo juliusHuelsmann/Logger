@@ -2,14 +2,15 @@
 #include <outputHandler/Stdio.h>
 
 #include <iostream>
+#include <iterator>
+#include <algorithm>
 
-void jlog::outputHandler::Stdio::handle(
-    std::string st, jlog::LogLevel msgLogLevel) {
-  if (msgLogLevel >= jlog::WARN)  std::cerr << st;
-  else std::cout << st;
-  std::cout << std::flush;
-  std::cerr << std::flush;
+void slog::outputHandler::Stdio::handle(
+    const char* st, slog::LogLevel msgLogLevel, size_t length) {
+   auto stream = msgLogLevel >= slog::WARN ? &std::cerr : &std::cout;
+   std::copy(st, st + length, std::ostream_iterator<unsigned char>(*stream));
+   *stream << "\n";
 }
 
-jlog::outputHandler::Stdio::Stdio(){}
-jlog::outputHandler::Stdio::~Stdio(){}
+slog::outputHandler::Stdio::Stdio(){}
+slog::outputHandler::Stdio::~Stdio(){}

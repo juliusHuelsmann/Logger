@@ -9,22 +9,108 @@
 #include <sstream>
 #include <string>
 #include <ctime>
+#include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <vector>
+#include <map>
+#include <boost/algorithm/string.hpp>
+#include <stdarg.h>
+#include <mutex>
+#include <thread>
 
-namespace jlog {
+namespace slog {
+
+#define SUB_EQ(sub, str) str.size() >= sub.size() && \
+  std::equal(sub.begin(), sub.begin()+sub.size(), str.begin())
+
 #define LOG Logger::getInstance
+  /*
+#define TOPIC(...) \
+  slog::Logger::topic(\
+  std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value-1, \
+        sizeof(__VA_ARGS__), __VA_ARGS__);
+        */
+
+#define TOPIC(str, val, ...) \
+  slog::Logger::topic(str,\
+    std::vector<typeof(val)>({val, __VA_ARGS__}));
+
+  typedef std::ostream& (*ManipFn)(std::ostream&);
+  typedef std::ios_base& (*FlagsFn)(std::ios_base&);
 
   /**
-   * Logging class 
+   * Contains functionality for logging and for specification of topics and
+   * topic-related settings and functionality for making the logging thread
+   * safe.
    */
   class Logger {
 
+  private:
+
+    /**
+     * Count of the locks acquired by one thread.
+     */
+    static uint refCount;
+    static bool flushed;
+
+    struct UnlockMutexReturnHelper{
+      ~UnlockMutexReturnHelper() {
+        Logger::getInstance().mtx.unlock();
+      }
+    };
+
+
+    /**
+     * Guards the mutex and ensures that std::endl is not forgotten!
+     *
+     * Attention: The mutex is required to be locked when creating an instance
+     * of MutexGuard, as that is the way to make counting thread-specific.
+     */
+    struct MutexGuard {
     public:
-      typedef std::ostream& (*ManipFn)(std::ostream&);
-      typedef std::ios_base& (*FlagsFn)(std::ios_base&);
-      const std::string separator = "-----------------------------";
-      const std::string end = "                                                                              □ ";
+
+      MutexGuard(Logger* l): l(l) {
+        // the first MutexGuard has to lock one times more
+        if (!l->refCount++) {
+          l->mtx.lock();
+        }
+      }
+
+      ~MutexGuard() {
+        l->mtx.unlock();
+        if (!--l->refCount) {
+          // 1) lock, 2) lock (in constructor), 3) unlock (here) 4) unlock (here)
+          if (!flushed) *this << std::endl;
+          l->mtx.unlock();
+        }
+      }
+
+      template<class T>
+      MutexGuard operator<<(const std::vector<T>& m) {
+        l->flushed = false;
+        return *l << m;
+      }
+      template<class T>
+      MutexGuard operator<<(const T& m) {
+        l->flushed = false;
+        return  *l<<m;
+      }
+      MutexGuard operator<<(ManipFn m) {
+        l->flushed = true;
+        return  *l<<m;
+      }
+
+    private:
+      Logger* l;
+    };
+
+
+
+
+  public:
+
+
 
       /*
        * delete, copy, move constructors and assign operators
@@ -33,6 +119,7 @@ namespace jlog {
       Logger(Logger&&) = delete;
       Logger& operator=(Logger const&) = delete;
       Logger& operator=(Logger &&) = delete;
+
       static Logger& getInstance() {
         static Logger instance;
         return instance;
@@ -44,38 +131,270 @@ namespace jlog {
       }
 
       /*
+       *  Topics
+       */
+
+      /**
+       * Set the default configuration which is applied in case no more
+       * specific sub-configuration is given.
+       */
+      static void setBaseContext(const topic::Context& baseContext) {
+        getInstance().mtx.lock();
+        auto mg = UnlockMutexReturnHelper();
+        Logger::baseContext = baseContext;
+        for (auto c: launchedTopics) {
+          recomputeSettings(c.first, c.second);
+          assert(c.second);
+        }
+      }
+
+
+      /**
+       *  helper function for extracting subtopics from string.
+       */
+      static void subTopic(std::vector<std::string>& topBranch,
+                           const std::string& topId) {
+          auto c = boost::split(topBranch, topId,
+                       [](char c){return c == '.' || c == '[';});
+      }
+
+    private:
+
+      /**
+       * Utility method for computing the context for a given branch if enabled.
+       *
+       * @param topicBranchId       a string that uniquely identifies the
+       *                            branch in the settings tree.
+       * @param amountParameters    the typical amount of parameters that is
+       *                            logged under the specific topic.
+       * @param sizeType            the type of the size that is to be stored
+       *                            under topic.
+       *
+       * @return    the context that is attached for the provided settings
+       *            branch identifier or nullptr if the settings in question
+       *            are not logged.
+       * @see recomputeSettings
+       */
+      static topic::Context* computeSettings(const std::string& topic,
+          uint amountParameters, uint sizeType) {
+        topic::Context* ctx = new topic::Context(amountParameters, sizeType);
+        recomputeSettings(topic, ctx);
+        return ctx;
+      }
+
+      /**
+       *
+       * @param topic         a string that uniquely identifies the
+       *                      branch in the settings tree.
+       * @param ctx           Handle to a pointer of context, is deleted  and
+       *                      set to nullptr if the subject branch is not
+       *                      enabled, otherwise contains the context
+       *                      associated with the settingds branch.
+       */
+      static void recomputeSettings(const std::string& topic,
+                                    topic::Context*& ctx, bool enabled=false) {
+
+        // generate a sub-topic split for the passed identifier
+        auto sub = std::vector<std::string>();
+        Logger::subTopic(sub, topic);
+
+        // Initialize the context that is to be created with the base context.
+        // Then go through the settings tree and apply the settings.
+        // More specific settings have a higher priority than general settings.
+        *ctx = Logger::baseContext;
+        //auto enabled = false;         //< true if some parent is enabled.
+        auto cTop = &topics;
+        auto idx = sub.begin();
+        for (cTop = cTop->sub.count(*idx)!=0 ? cTop->sub[*idx]: nullptr;
+             cTop != nullptr && idx != sub.end();
+             cTop = ++idx != sub.end() && cTop->sub.count(*idx)
+                    ? cTop->sub[*idx]: nullptr) {
+
+          if (cTop->s) {
+            enabled = true;
+            ctx->apply(*cTop->s);
+          }
+        }
+        if (!enabled) {
+          delete(ctx);
+          ctx= nullptr;
+        }
+      }
+
+    public:
+
+      /**
+       * Function used for enabling a topic. After it is enabled, topic logs
+       * categorized under that topic or any of its descendants are enabled
+       * and processed as specified via preference - parameters.
+       *
+       * Logging preferences (called "Context") for topics are inherited if
+       * set. The root of inheritance is the base configuration "baseContext".
+       *
+       * If this function is called multiple times for the same topic, the
+       * information provided last are taken into account.
+       */
+      static void enableTopic(const std::string& topic,
+                              outputHandler::OutputHandler*out= nullptr,
+          uint memorySize=0, const std::string topicPrefix="") {
+
+        getInstance().mtx.lock();
+        volatile UnlockMutexReturnHelper umrh;
+
+        //auto thisId = std::this_thread::get_id();
+        //std::cout << ":" << thisId << "";
+
+
+
+        // erase the implicitly disabled topics that are descendants of the
+        // now-enabled topic #topic.
+        for (auto d = disabledTopics.begin(); d != disabledTopics.end();
+             d = SUB_EQ(topic, d->first) ? disabledTopics.erase(d) : ++d);
+
+        // generate a sub-topic split for the passed identifier
+        auto sub = std::vector<std::string>();
+        subTopic(sub, topic);
+        if (!sub.size()) return;
+
+        // Determine whether the topic has already been enabled, add it
+        // otherwise.
+        topic::Topic* t = &topics;
+        for (auto cSub = sub.begin(); cSub != sub.end(); t = t->sub[*cSub++])
+          if (!t->sub.count(*cSub)) {
+            t->sub[*cSub] = new topic::Topic();
+          }
+
+        // Store the context inside the topic
+        if (t->s) delete(t->s);
+        t->s = new topic::Context(out, memorySize, topicPrefix);
+        auto k = Logger::topics;
+
+        // update the buffered context for all subjects that were enabled
+        // before.
+        for (auto c: Logger::launchedTopics) {
+          if (SUB_EQ(topic, c.first)) {
+            const auto memSizePrior = c.second->memorySize;
+            recomputeSettings(c.first, c.second, true);
+            const auto memSizeAfter = c.second->memorySize;
+
+            if (memSizePrior != memSizeAfter) {
+              if (c.second->nextFreeIndex) // if contains content
+                c.second->out->handle((const char*) c.second->els, INFO,
+                                      (size_t) c.second->nextFreeIndex);
+              delete(c.second->els);
+              c.second->els = (char* ) malloc(c.second->memorySize);
+              c.second->nextFreeIndex = 0;
+            }
+            if ((memSizeAfter != memorySize && topic == c.first)) {
+              std:: cout << memSizeAfter << " " << memorySize << " " << topic << " " << c.first << "\n";
+              assert(!(memSizeAfter != memorySize && topic == c.first));
+
+            }
+          }
+        }
+        //std::cout << " " << thisId << "\n";
+      }
+
+
+
+      /**
+       * 
+       */
+      template <typename T> static
+      void topic(std::string tIdent, std::vector<T> vec) {
+
+        getInstance().mtx.lock();
+        volatile auto mg = UnlockMutexReturnHelper();
+
+        // The topic is implicitly disabled (check returned false before); exit
+        if (disabledTopics.count(tIdent)) return;
+
+        // The topic has been used before as it is enabled, so directly use
+        // the attached context.
+        const auto sizeType = sizeof(T);
+        const auto sizeVec = vec.size();
+        if (!launchedTopics.count(tIdent)) {
+
+          // the exact topic has not been used yet, but it is possible that
+          // it is a descendant of a topic that is enabled.
+
+          auto contextToAdd = computeSettings(tIdent, sizeVec, sizeType);
+          if (contextToAdd) {
+            launchedTopics[tIdent] = contextToAdd;
+            launchedTopics[tIdent]->els = (char* ) malloc(contextToAdd->memorySize);
+          }
+          else {
+            disabledTopics[tIdent] = true;
+            return;
+          }
+        }
+
+        //
+        // Log the values.
+        assert(launchedTopics.count(tIdent));
+        auto topic = launchedTopics[tIdent];
+        assert(topic->out);
+        assert(sizeVec == topic->amount && sizeType == topic->typeSize);
+        const auto sizeToAdd = vec.size() * sizeof(T);
+        if (topic->memorySize <= sizeToAdd + topic->nextFreeIndex) {
+          //
+          // Directly forward to the output
+          // XXX: send settings with the the array!
+          if (topic->nextFreeIndex) {
+            topic->out->handle((const char*) topic->els, INFO, (size_t) topic->nextFreeIndex);
+          }
+          topic->out->handle((const char*) vec.data(), INFO, sizeToAdd);
+          topic->nextFreeIndex = 0;
+        } else {
+          //
+          // write to buffer and increase buffer index.
+          memcpy(topic->els+topic->nextFreeIndex, vec.data(), sizeToAdd);
+          topic->nextFreeIndex += sizeToAdd;
+          assert(topic->nextFreeIndex < topic->memorySize);
+
+        }
+
+      }
+
+      /*
        * Overloaded operators
        */
-      template<class T> Logger& operator<<(const std::vector<T>& output) {
+      template<class T> MutexGuard operator<<(const std::vector<T>& output) {
+        mtx.lock();
+        if (!refCount) start();
         for (auto i = output.begin(); i != output.end(); ++i)
           sstream << *i;
-        return *this;
+        return MutexGuard(this);
       }
 
       /*
        * int, double, strings, ...
        */
-      template<class T> Logger& operator<<(const T& output) {
+      template<class T> MutexGuard operator<<(const T& output) {
+        mtx.lock();
+        if (!refCount) start();
         sstream << output;
-        return *this;
+        return MutexGuard(this);
       }
 
       /*
        * endl, flush, sentw, setfill, ...
        */
-      Logger& operator<<(ManipFn manip) { 
+      MutexGuard operator<<(ManipFn manip) {
+        mtx.lock();
         manip(sstream);
         if (manip == static_cast<ManipFn>(std::flush)
             || manip == static_cast<ManipFn>(std::endl ) ) this->flush();
-        return *this;
+        return MutexGuard(this);
       }
 
       /**
        *  For setiosflags + resetiosflags.
        */
-      Logger& operator<<(FlagsFn manip) {
+      MutexGuard operator<<(FlagsFn manip) {
+        mtx.lock();
         manip(sstream);
-        return *this;
+        return MutexGuard(this);
       }
       
 
@@ -84,40 +403,33 @@ namespace jlog {
        * next.
        */
       Logger& operator()(LogLevel e) {
+        mtx.lock();
         this->logLevelCurrentMessage = e;
+        mtx.unlock();
         return *this;
       }
 
-
-      /**
-       * Actual handling of the message
-       */
-      void flush() {
-
-        // Check if the message is to be logged.
-        if (this->logLevelCurrentMessage >= this->logLevel) {
-
-          std::stringstream pre;
-          pre << separator;
+  private:
+      void start() {
           switch (this->logLevelCurrentMessage) {
             case DEBUG:
-              pre << "DEBUG";
+              sstream << "DEBUG";
               break;
             case INFO:
-              pre << "INFO ";
+              sstream << "INFO ";
               break;
             case WARN:
-              pre << "WARN ";
+              sstream << "WARN ";
               break;
             case ERROR:
-              pre << "ERROR";
+              sstream << "ERROR";
               break;
             case FATAL:
-              pre << "FATAL";
+              sstream << "FATAL";
               break;
             case NEVER:
             default:
-              pre << "Fatal error occurred while logging a message: "
+              sstream << "Fatal error occurred while logging a message: "
                   << " Log level of message corrupted : "
                   << this->logLevelCurrentMessage
                   << "\n\nOriginal message:\n";
@@ -129,15 +441,26 @@ namespace jlog {
           auto now = std::time(0);
           auto local = std::localtime(&now);
           this->msg = (this->msg + 1) % 100;
-          pre <<  " " <<local->tm_mday << "." << (local->tm_mon + 1) << ' '
+          sstream <<  "["
+              //<< local->tm_mday << "." << (local->tm_mon + 1) << ' '
               << local->tm_hour << ":" << local->tm_min << ":" << local->tm_sec
-              << "." << (msg < 10 ? " " : "")  << msg;
+              << "." << (msg < 10 ? " " : "")  << msg << "] ";
+        this->startString = std::string(sstream.str().size(),' ');
+      }
 
 
-          // append the message.
-          pre << separator << "\n" << sstream.str() << "\n" << end << "\n";
+      /**
+       * Actual handling of the message
+       */
+      void flush() {
 
-          out->handle(pre.str(), logLevelCurrentMessage);
+        // Check if the message is to be logged.
+        if (this->logLevelCurrentMessage >= this->logLevel) {
+
+          auto s = sstream.str();
+          boost::replace_all(s.erase(s.size()-1),"\n","\n" + startString);
+
+          out->handle(s.c_str(), logLevelCurrentMessage);
 
           // Check if the program has to exit according to the log level
           if (this->logLevelCurrentMessage >= this->exitLevel) {
@@ -145,7 +468,7 @@ namespace jlog {
             std::stringstream error;
             error << "\n The logger-exit level is set to exit on messages of level "
                   << this->exitLevel << " or higher. \n Bye!\n";
-            out->handle(error.str(), INFO);
+            out->handle(error.str().c_str(), INFO);
             std::exit(-1);
           }
         }
@@ -157,16 +480,23 @@ namespace jlog {
         this->logLevelCurrentMessage = INFO;
       }
 
+  public:
+
       /*
        * Setters for properties
        */
 
       void setExitLevel(LogLevel ll) {
+
+        mtx.lock();
         this->exitLevel = ll;
+        mtx.unlock();
       }
 
       void setLogLevel(LogLevel ll) {
+        mtx.lock();
         this->logLevel = ll;
+        mtx.unlock();
       }
 
       /*
@@ -174,15 +504,22 @@ namespace jlog {
        * by the logger.
        */
       void setStreamMethod(outputHandler::OutputHandler* out) {
+        mtx.lock();
         if (this->out) delete(this->out);
         this->out = out;
+        this->baseContext.out = out;
+        mtx.unlock();
       }
 
     protected:
 
-      Logger(): logLevelCurrentMessage(INFO), logLevel(INFO), exitLevel(ERROR) {
+      Logger(): logLevelCurrentMessage(INFO), logLevel(INFO), exitLevel(ERROR),
+                startString("") {
         out = new outputHandler::Stdio();
         this->msg = 0;
+        this->baseContext.out = out;
+
+
       }
 
       virtual ~Logger() {
@@ -207,6 +544,12 @@ namespace jlog {
       LogLevel exitLevel;
 
       /**
+       * String set by #start and printed in #flush; contains the correct amount
+       * of spaces for aligning the output nicely.
+       */
+      std::string startString;
+
+      /**
        * Stream for the current log message.
        */
       std::stringstream sstream;
@@ -220,7 +563,60 @@ namespace jlog {
        * Message counter.
        */
       uint64_t msg;
+
+      /**
+       * 
+       */
+      static topic::Topic topics;
+      static std::unordered_map<std::string, topic::Context*> launchedTopics;
+      static std::unordered_map<std::string, bool> disabledTopics;
+      static topic::Context baseContext;
+
+
+      class Mut : public std::recursive_mutex {
+      public:
+        static uint cntr;
+
+        void lock() {
+          cntr++;
+          this->std::recursive_mutex::lock();
+        }
+        void unlock() {
+          this->std::recursive_mutex::unlock();
+        }
+
+      };
+      /**
+       * Mutex that is used in the middle of
+       */
+      Mut mtx;
+
+
+
+
+
+    friend MutexGuard;
+
   };
+  topic::Topic Logger::topics = topic::Topic();
+  topic::Context Logger::baseContext = topic::Context();
+  std::unordered_map<std::string, topic::Context*> Logger::launchedTopics =
+      std::unordered_map<std::string, topic::Context*>();
+  std::unordered_map<std::string, bool> Logger::disabledTopics =
+      std::unordered_map<std::string, bool>();
+
+  uint Logger::refCount = 0;
+  bool Logger::flushed = false;
+  uint Logger::Mut::cntr = 0;
+
+
+
+
+
+
+
+
 }
+
 
 #endif // _LOGGER_H_

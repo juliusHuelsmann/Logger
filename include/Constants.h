@@ -1,7 +1,7 @@
 #ifndef _LOG_CONST_H_
 #define _LOG_CONST_H_
 
-namespace jlog  {
+namespace slog {
 
   enum LogLevel {
     DEBUG=0,

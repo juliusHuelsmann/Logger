@@ -3,7 +3,7 @@
 
 #include <outputHandler/OutputHandler.h>
 
-namespace jlog {
+namespace slog {
   namespace outputHandler {
     class Stdio : public OutputHandler {
 
@@ -14,7 +14,9 @@ namespace jlog {
          * This function handles a way to deal with messages:
          * print to standard out / standard err.
          */
-        virtual void handle(std::string st, LogLevel msgLogLevel) override;
+        virtual void handle(const char* st, LogLevel msgLogLevel, size_t s)
+        override;
+
         virtual ~Stdio();
 
     };

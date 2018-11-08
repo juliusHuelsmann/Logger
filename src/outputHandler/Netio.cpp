@@ -8,9 +8,8 @@
 
 #include <iostream>
 #include <sstream>
-#include <cstring>
 
-jlog::outputHandler::Netio::Netio(bool useSocket, 
+slog::outputHandler::Netio::Netio(bool useSocket, 
     bool useCli, uint port) : context(1), socket(context, ZMQ_PUB), 
     connection(std::string("tcp://*:") + std::to_string(port)) {
   this->useNetwork = useSocket;
@@ -19,26 +18,24 @@ jlog::outputHandler::Netio::Netio(bool useSocket,
 }
 
 
-jlog::outputHandler::Netio::~Netio() { 
+slog::outputHandler::Netio::~Netio() { 
   socket.close();
 }
 
 
-void jlog::outputHandler::Netio::handle(
-    std::string st, jlog::LogLevel msgLogLevel) {
+void slog::outputHandler::Netio::handle(
+    const char* st, slog::LogLevel msgLogLevel, size_t length) {
 
   if (useCli) {
-    if (msgLogLevel >= jlog::WARN) std::cerr << st;
-    else std::cout << st;
-    std::cout << std::flush;
-    std::cerr << std::flush;
+    auto stream = msgLogLevel >= slog::WARN ? &std::cerr : &std::cout;
+    std::copy(st, st + length, std::ostream_iterator<unsigned char>(*stream));
+    *stream << std::endl;
   }
 
   if (useNetwork) {
     // send via network.
-    auto sz = st.size();
-    zmq::message_t logMsg(sz);
-    memcpy(logMsg.data(), st.data(), sz);
+    zmq::message_t logMsg(length);
+    memcpy(logMsg.data(), st, length);
     socket.send(logMsg);
   }
 }
