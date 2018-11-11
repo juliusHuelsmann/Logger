@@ -41,3 +41,4 @@ target_link_libraries(logger PRIVATE ${ZeroMQ_LIBRARY} pthread)
 
 # Build the tests
 add_subdirectory(test)
+add_subdirectory(examples)

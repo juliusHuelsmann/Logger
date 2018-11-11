@@ -21,6 +21,11 @@
 
 namespace slog {
 
+#define LINE_PLOT "scatter"
+#define HISTOGRAM "histogram"
+#define scatter "pointcloud"
+#define interval "interval"
+
 #define SUB_EQ(sub, str) str.size() >= sub.size() && \
   std::equal(sub.begin(), sub.begin()+sub.size(), str.begin())
 
@@ -176,8 +181,9 @@ namespace slog {
        * @see recomputeSettings
        */
       static topic::Context* computeSettings(const std::string& topic,
-          uint amountParameters, uint sizeType) {
-        topic::Context* ctx = new topic::Context(amountParameters, sizeType);
+          uint amountParameters, uint sizeType, const char dataType) {
+        topic::Context* ctx =
+            new topic::Context(amountParameters, sizeType, dataType);
         recomputeSettings(topic, ctx);
         return ctx;
       }
@@ -198,6 +204,21 @@ namespace slog {
         auto sub = std::vector<std::string>();
         Logger::subTopic(sub, topic);
 
+
+        // sub topic configuration
+        auto i = topic.find('[');
+        std::string subTop = "";
+        std::string top = topic;
+        if (i != std::string::npos) {
+          auto j = topic.find(']');
+          assert(j != std::string::npos && j > i);
+
+
+          subTop =  topic.substr(i+1, j-i-1);
+          top = topic.substr(0,i) + topic.substr(j+1, topic.size());
+        }
+
+
         // Initialize the context that is to be created with the base context.
         // Then go through the settings tree and apply the settings.
         // More specific settings have a higher priority than general settings.
@@ -215,6 +236,8 @@ namespace slog {
             ctx->apply(*cTop->s);
           }
         }
+        ctx->subTopic = subTop;
+        ctx->topic = top;
         if (!enabled) {
           delete(ctx);
           ctx= nullptr;
@@ -236,7 +259,8 @@ namespace slog {
        */
       static void enableTopic(const std::string& topic,
                               outputHandler::OutputHandler*out= nullptr,
-          uint memorySize=0, const std::string topicPrefix="") {
+          uint memorySize=0, const std::string topicPrefix="", 
+          const std::string plotStyle=LINE_PLOT) {
 
         getInstance().mtx.lock();
         volatile UnlockMutexReturnHelper umrh;
@@ -266,7 +290,7 @@ namespace slog {
 
         // Store the context inside the topic
         if (t->s) delete(t->s);
-        t->s = new topic::Context(out, memorySize, topicPrefix);
+        t->s = new topic::Context(out, memorySize, topicPrefix, plotStyle);
         auto k = Logger::topics;
 
         // update the buffered context for all subjects that were enabled
@@ -285,14 +309,9 @@ namespace slog {
               c.second->els = (char* ) malloc(c.second->memorySize);
               c.second->nextFreeIndex = 0;
             }
-            if ((memSizeAfter != memorySize && topic == c.first)) {
-              std:: cout << memSizeAfter << " " << memorySize << " " << topic << " " << c.first << "\n";
-              assert(!(memSizeAfter != memorySize && topic == c.first));
-
-            }
+            assert(!(memSizeAfter != memorySize && topic == c.first));
           }
         }
-        //std::cout << " " << thisId << "\n";
       }
 
 
@@ -313,12 +332,18 @@ namespace slog {
         // the attached context.
         const auto sizeType = sizeof(T);
         const auto sizeVec = vec.size();
+
+        auto name = typeid(T).name();
+        //const char dataType = types.count(name) ? types[name] : ' ';
+        const char dataType = name[0];
+
         if (!launchedTopics.count(tIdent)) {
 
           // the exact topic has not been used yet, but it is possible that
           // it is a descendant of a topic that is enabled.
 
-          auto contextToAdd = computeSettings(tIdent, sizeVec, sizeType);
+          auto contextToAdd = computeSettings(tIdent, sizeVec, sizeType,
+                                              dataType);
           if (contextToAdd) {
             launchedTopics[tIdent] = contextToAdd;
             launchedTopics[tIdent]->els = (char* ) malloc(contextToAdd->memorySize);
@@ -336,14 +361,36 @@ namespace slog {
         assert(topic->out);
         assert(sizeVec == topic->amount && sizeType == topic->typeSize);
         const auto sizeToAdd = vec.size() * sizeof(T);
+        auto settings = std::stringstream ();
+        assert (topic->topic.size() < 255);
+        settings << (unsigned char) 1
+                 << (unsigned char) topic->topic.size()
+                 << topic->topic.c_str()
+                 << (unsigned char) topic->subTopic.size()
+                 << topic->subTopic.c_str()
+                 << (unsigned char) topic->plotStyle.size()
+                 << topic->plotStyle
+                 << topic->amount
+                 << topic->typeSize
+                 << topic->dataType;
+
+
+
+
+
         if (topic->memorySize <= sizeToAdd + topic->nextFreeIndex) {
+          auto str = settings.str();
+          auto vals = std::vector<std::pair<const char*, size_t>>();
+          vals.push_back(std::make_pair(str.c_str(), str.size()));
+
           //
           // Directly forward to the output
-          // XXX: send settings with the the array!
-          if (topic->nextFreeIndex) {
-            topic->out->handle((const char*) topic->els, INFO, (size_t) topic->nextFreeIndex);
-          }
-          topic->out->handle((const char*) vec.data(), INFO, sizeToAdd);
+          if (topic->nextFreeIndex) vals.push_back(std::make_pair(
+                topic->els, (size_t) topic->nextFreeIndex));
+
+          vals.push_back(std::make_pair((const char*) vec.data(),
+                                        (size_t) sizeToAdd));
+          topic->out->handle(vals, INFO);
           topic->nextFreeIndex = 0;
         } else {
           //
@@ -592,6 +639,9 @@ namespace slog {
       Mut mtx;
 
 
+      static std::unordered_map<std::string, char> types;
+
+
 
 
 
@@ -608,9 +658,13 @@ namespace slog {
   uint Logger::refCount = 0;
   bool Logger::flushed = false;
   uint Logger::Mut::cntr = 0;
-
-
-
+  std::unordered_map<std::string, char> Logger::types = {
+      {"char",'c'}, {"signed char", 'b'}, {"unsigned char", 'B'}, {"bool", '?'},
+      {"short", 'h'}, {"unsigned short", 'H'},
+      {"int", 'i'}, {"unsigned int", 'I'},
+      {"long", 'l'}, {"unsigned long", 'L'},
+      {"long long", '1'}, {"unsigned long long", 'Q'},
+      {"float", 'f'}, {"double", 'd'}};
 
 
 

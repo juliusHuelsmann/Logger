@@ -23,19 +23,28 @@ slog::outputHandler::Netio::~Netio() {
 }
 
 
+
+
 void slog::outputHandler::Netio::handle(
-    const char* st, slog::LogLevel msgLogLevel, size_t length) {
+    std::vector<std::pair<const char*, size_t>> sts, slog::LogLevel msgLogLevel) {
 
   if (useCli) {
     auto stream = msgLogLevel >= slog::WARN ? &std::cerr : &std::cout;
-    std::copy(st, st + length, std::ostream_iterator<unsigned char>(*stream));
+    for (auto st:sts) std::copy(st.first,st.first+st.second,
+        std::ostream_iterator<unsigned char>(*stream));
     *stream << std::endl;
   }
 
   if (useNetwork) {
+    size_t sz = 0;
+    for (auto st:sts) sz += st.second;
     // send via network.
-    zmq::message_t logMsg(length);
-    memcpy(logMsg.data(), st, length);
+    zmq::message_t logMsg(sz);
+    auto idx = 0;
+    for (auto k = sts.begin();
+         k != sts.end(); idx+= k->second, k++)
+      memcpy((char*)logMsg.data() + idx, k->first, k->second);
+    assert(idx==sz);
     socket.send(logMsg);
   }
 }

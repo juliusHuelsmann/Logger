@@ -7,6 +7,7 @@
 #include<string>
 #include<unordered_map>
 #include <cstring>
+#include <vector>
 
 
 namespace slog {
@@ -22,8 +23,15 @@ namespace slog {
           handle(st,msgLogLevel, strlen(st));
         }
 
-        virtual void handle(const char* st, LogLevel msgLogLevel, size_t len)=0;
+        virtual void handle(const char* sts,
+                            LogLevel msgLogLevel, size_t len) final {
+          std::vector<std::pair<const char*, size_t>> d;
+          d.push_back(std::make_pair(sts, len));
+          handle(d, msgLogLevel);
+        }
 
+        virtual void handle(std::vector<std::pair<const char*, size_t>> sts,
+                            slog::LogLevel msgLogLevel) = 0;
         virtual ~OutputHandler();
 
     };
@@ -45,32 +53,37 @@ namespace slog {
        * @param amount
        * @param typeSize
        */
-      Context(uint amount, uint typeSize) :
-          out(nullptr), memorySize(0), topicPrefix(""), nextFreeIndex(0),
-          els(nullptr), amount(amount), typeSize(typeSize) { }
+      Context(uint amount, uint typeSize, const char dataType) :
+          out(nullptr), memorySize(0), topicPrefix(""), plotStyle(""),
+          nextFreeIndex(0), els(nullptr), amount(amount), typeSize(typeSize), 
+          dataType(dataType) {
+
+      }
 
       /*
        * Constructors used for property inheritance
        */
 
       Context(outputHandler::OutputHandler* out = nullptr, uint memorySize = 0,
-              std::string topicPrefix = ""):
+              std::string topicPrefix = "", std::string plotStyle=""):
           out(out), memorySize(memorySize), topicPrefix(topicPrefix),
-          nextFreeIndex(0), els(nullptr), amount(0), typeSize(0) {
-
-      }
+          plotStyle(plotStyle),
+          nextFreeIndex(0), els(nullptr), amount(0), typeSize(0),
+          dataType(' ') { }
 
       Context& operator=(Context const& d) {
         this->out = d.out;
         this->memorySize = d.memorySize;
         this->topicPrefix = d.topicPrefix;
+        this->plotStyle = d.plotStyle;
         return *this;
       }
 
-      Context(const Context& d) : amount(0), typeSize(0) {
+      Context(const Context& d) : amount(0), typeSize(0), dataType(' ') {
         this->out = d.out;
         this->memorySize = d.memorySize;
         this->topicPrefix = d.topicPrefix;
+        this->plotStyle = d.plotStyle;
       }
       virtual ~Context() {
         free(els);
@@ -83,15 +96,19 @@ namespace slog {
         if (ancestor.out) this->out = ancestor.out;
         if (ancestor.memorySize) this->memorySize = ancestor.memorySize;
         if (ancestor.topicPrefix!="") this->topicPrefix += ancestor.topicPrefix;
+        if (ancestor.plotStyle!="") this->plotStyle = ancestor.plotStyle;
       }
 
       //
       // Inherited
       //
-
       outputHandler::OutputHandler* out;
       uint memorySize;
       std::string topicPrefix;
+      std::string plotStyle;
+
+      std::string topic;
+      std::string subTopic;
 
       //
       // Not inherited
@@ -100,6 +117,7 @@ namespace slog {
       char* els;
       const unsigned char amount;
       const unsigned char typeSize;
+      const char dataType;
     };
 
 

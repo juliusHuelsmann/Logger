@@ -14,8 +14,8 @@ namespace slog {
          * This function handles a way to deal with messages:
          * print to standard out / standard err.
          */
-        virtual void handle(const char* st, LogLevel msgLogLevel, size_t s)
-        override;
+        virtual void handle( std::vector<std::pair<const char*, size_t>> sts,
+                             slog::LogLevel msgLogLevel) override;
 
         virtual ~Stdio();
 

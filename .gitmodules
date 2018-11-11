@@ -1,0 +1,6 @@
+[submodule "examples/vendor/wrapper"]
+	path = examples/vendor/wrapper
+	url = git@github.com:juliusHuelsmann/Wrapper.git
+[submodule "examples/vendor/muparser"]
+	path = examples/vendor/muparser
+	url = git@github.com:juliusHuelsmann/muparser.git
