@@ -76,17 +76,22 @@ namespace slog {
         this->memorySize = d.memorySize;
         this->topicPrefix = d.topicPrefix;
         this->plotStyle = d.plotStyle;
+
+        els = nullptr;
+
         return *this;
       }
 
-      Context(const Context& d) : amount(0), typeSize(0), dataType(' ') {
+      Context(const Context& d) : els(nullptr), amount(0), typeSize(0),
+                                  dataType(' ') {
         this->out = d.out;
         this->memorySize = d.memorySize;
         this->topicPrefix = d.topicPrefix;
         this->plotStyle = d.plotStyle;
       }
+
       virtual ~Context() {
-        free(els);
+        if (els) free(els);
       }
 
       /**

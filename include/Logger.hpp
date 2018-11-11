@@ -23,8 +23,8 @@ namespace slog {
 
 #define LINE_PLOT "scatter"
 #define HISTOGRAM "histogram"
-#define scatter "pointcloud"
-#define interval "interval"
+#define SCATTER "pointcloud"
+#define INTERVAL "interval"
 
 #define SUB_EQ(sub, str) str.size() >= sub.size() && \
   std::equal(sub.begin(), sub.begin()+sub.size(), str.begin())
@@ -38,7 +38,7 @@ namespace slog {
         */
 
 #define TOPIC(str, val, ...) \
-  slog::Logger::topic(str,\
+  Logger::topic(str,\
     std::vector<typeof(val)>({val, __VA_ARGS__}));
 
   typedef std::ostream& (*ManipFn)(std::ostream&);
@@ -153,6 +153,9 @@ namespace slog {
         }
       }
 
+      topic::Context const *getBaseContext() {
+        return &baseContext;
+      }
 
       /**
        *  helper function for extracting subtopics from string.
