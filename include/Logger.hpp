@@ -23,7 +23,7 @@ namespace slog {
 
 #define LINE_PLOT "scatter"
 #define HISTOGRAM "histogram"
-#define SCATTER "pointcloud"
+#define SCATTER "points"
 #define INTERVAL "interval"
 
 #define SUB_EQ(sub, str) str.size() >= sub.size() && \
@@ -262,8 +262,9 @@ namespace slog {
        */
       static void enableTopic(const std::string& topic,
                               outputHandler::OutputHandler*out= nullptr,
-          uint memorySize=0, const std::string topicPrefix="", 
-          const std::string plotStyle=LINE_PLOT) {
+          uint memorySize=0, const std::string topicPrefix="",
+          const std::string plotStyle=LINE_PLOT,
+                              const unsigned char plotBufferSize=0) {
 
         getInstance().mtx.lock();
         volatile UnlockMutexReturnHelper umrh;
@@ -293,7 +294,8 @@ namespace slog {
 
         // Store the context inside the topic
         if (t->s) delete(t->s);
-        t->s = new topic::Context(out, memorySize, topicPrefix, plotStyle);
+        t->s = new topic::Context(out, memorySize, topicPrefix, plotStyle,
+                                  plotBufferSize);
         auto k = Logger::topics;
 
         // update the buffered context for all subjects that were enabled
@@ -375,7 +377,8 @@ namespace slog {
                  << topic->plotStyle
                  << topic->amount
                  << topic->typeSize
-                 << topic->dataType;
+                 << topic->dataType
+                 << topic->plotBufferSize;
 
 
 

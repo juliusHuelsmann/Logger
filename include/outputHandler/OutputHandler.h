@@ -55,6 +55,7 @@ namespace slog {
        */
       Context(uint amount, uint typeSize, const char dataType) :
           out(nullptr), memorySize(0), topicPrefix(""), plotStyle(""),
+          plotBufferSize(0),
           nextFreeIndex(0), els(nullptr), amount(amount), typeSize(typeSize), 
           dataType(dataType) {
 
@@ -65,9 +66,10 @@ namespace slog {
        */
 
       Context(outputHandler::OutputHandler* out = nullptr, uint memorySize = 0,
-              std::string topicPrefix = "", std::string plotStyle=""):
+              std::string topicPrefix = "", std::string plotStyle="",
+              const unsigned char plotBufferSize=0):
           out(out), memorySize(memorySize), topicPrefix(topicPrefix),
-          plotStyle(plotStyle),
+          plotStyle(plotStyle), plotBufferSize(plotBufferSize),
           nextFreeIndex(0), els(nullptr), amount(0), typeSize(0),
           dataType(' ') { }
 
@@ -88,6 +90,7 @@ namespace slog {
         this->memorySize = d.memorySize;
         this->topicPrefix = d.topicPrefix;
         this->plotStyle = d.plotStyle;
+        this->plotBufferSize = d.plotBufferSize;
       }
 
       virtual ~Context() {
@@ -102,6 +105,7 @@ namespace slog {
         if (ancestor.memorySize) this->memorySize = ancestor.memorySize;
         if (ancestor.topicPrefix!="") this->topicPrefix += ancestor.topicPrefix;
         if (ancestor.plotStyle!="") this->plotStyle = ancestor.plotStyle;
+        if (ancestor.plotBufferSize) this->plotBufferSize = ancestor.plotBufferSize;
       }
 
       //
@@ -111,6 +115,7 @@ namespace slog {
       uint memorySize;
       std::string topicPrefix;
       std::string plotStyle;
+      unsigned char plotBufferSize;
 
       std::string topic;
       std::string subTopic;
