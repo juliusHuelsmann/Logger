@@ -40,5 +40,9 @@ target_include_directories(logger PUBLIC ${PROJECT_SOURCE_DIR}/include PRIVATE $
 target_link_libraries(logger PRIVATE ${ZeroMQ_LIBRARY} pthread)
 
 # Build the tests
-add_subdirectory(test)
-add_subdirectory(examples)
+
+OPTION(BUILD_TESTS "Build tests." OFF)
+if (BUILD_TESTS)
+  add_subdirectory(test)
+  add_subdirectory(examples)
+endif()
