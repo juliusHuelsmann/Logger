@@ -40,7 +40,7 @@ void slog::outputHandler::Netio::handle(
     for (auto st:sts) sz += st.second;
     // send via network.
     zmq::message_t logMsg(sz);
-    auto idx = 0;
+    uint32_t idx = 0;
     for (auto k = sts.begin();
          k != sts.end(); idx+= k->second, k++)
       memcpy((char*)logMsg.data() + idx, k->first, k->second);

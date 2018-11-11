@@ -648,25 +648,6 @@ namespace slog {
     friend MutexGuard;
 
   };
-  topic::Topic Logger::topics = topic::Topic();
-  topic::Context Logger::baseContext = topic::Context();
-  std::unordered_map<std::string, topic::Context*> Logger::launchedTopics =
-      std::unordered_map<std::string, topic::Context*>();
-  std::unordered_map<std::string, bool> Logger::disabledTopics =
-      std::unordered_map<std::string, bool>();
-
-  uint Logger::refCount = 0;
-  bool Logger::flushed = false;
-  uint Logger::Mut::cntr = 0;
-  std::unordered_map<std::string, char> Logger::types = {
-      {"char",'c'}, {"signed char", 'b'}, {"unsigned char", 'B'}, {"bool", '?'},
-      {"short", 'h'}, {"unsigned short", 'H'},
-      {"int", 'i'}, {"unsigned int", 'I'},
-      {"long", 'l'}, {"unsigned long", 'L'},
-      {"long long", '1'}, {"unsigned long long", 'Q'},
-      {"float", 'f'}, {"double", 'd'}};
-
-
 
 
 
