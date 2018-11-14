@@ -14,11 +14,16 @@
 
 namespace slog {
   namespace outputHandler {
-    class Netio : public OutputHandler {
+    class NetIo : public OutputHandler {
 
     public:
-      Netio(bool useNetwork=true, bool useCli=true, uint port=8000);
-      Netio();
+
+      NetIo(bool useNetwork=true, bool useCli=true, uint port=8000);
+
+      /**
+       * Socket is closed in the default socket destructor.
+       */
+      virtual ~NetIo() = default;
 
       /**
        * This function handles a way to deal with messages:
@@ -27,7 +32,6 @@ namespace slog {
       virtual void handle( std::vector<std::pair<const char*, size_t>> sts,
                    slog::LogLevel msgLogLevel) override;
 
-      virtual ~Netio();
 
     private:
       zmq::context_t context;

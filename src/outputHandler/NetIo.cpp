@@ -4,12 +4,12 @@
 
 #ifdef FOUND_ZMQ
 
-#include <outputHandler/Netio.h>
+#include <outputHandler/NetIo.h>
 
 #include <iostream>
 #include <sstream>
 
-slog::outputHandler::Netio::Netio(bool useSocket, 
+slog::outputHandler::NetIo::NetIo(bool useSocket,
     bool useCli, uint port) : context(1), socket(context, ZMQ_PUB), 
     connection(std::string("tcp://*:") + std::to_string(port)) {
   this->useNetwork = useSocket;
@@ -18,14 +18,11 @@ slog::outputHandler::Netio::Netio(bool useSocket,
 }
 
 
-slog::outputHandler::Netio::~Netio() { 
-  socket.close();
-}
 
 
 
 
-void slog::outputHandler::Netio::handle(
+void slog::outputHandler::NetIo::handle(
     std::vector<std::pair<const char*, size_t>> sts, slog::LogLevel msgLogLevel) {
 
   if (useCli) {

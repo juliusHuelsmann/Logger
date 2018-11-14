@@ -41,8 +41,8 @@ target_link_libraries(logger PRIVATE ${ZeroMQ_LIBRARY} pthread)
 
 # Build the tests
 
-OPTION(BUILD_TESTS "Build tests." OFF)
-if (BUILD_TESTS)
+OPTION(BuildTests "Build tests." ON)
+if (${BuildTests})
   add_subdirectory(test)
   add_subdirectory(examples)
 endif()

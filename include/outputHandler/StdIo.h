@@ -5,10 +5,11 @@
 
 namespace slog {
   namespace outputHandler {
-    class Stdio : public OutputHandler {
+    class StdIo : public OutputHandler {
 
       public: 
-        Stdio();
+        StdIo() = default;
+        virtual ~StdIo()= default;
 
         /**
          * This function handles a way to deal with messages:
@@ -17,7 +18,6 @@ namespace slog {
         virtual void handle( std::vector<std::pair<const char*, size_t>> sts,
                              slog::LogLevel msgLogLevel) override;
 
-        virtual ~Stdio();
 
     };
   }

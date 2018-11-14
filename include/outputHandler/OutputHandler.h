@@ -32,7 +32,7 @@ namespace slog {
 
         virtual void handle(std::vector<std::pair<const char*, size_t>> sts,
                             slog::LogLevel msgLogLevel) = 0;
-        virtual ~OutputHandler();
+        virtual ~OutputHandler() = default;
 
     };
   }

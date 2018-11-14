@@ -1,13 +1,11 @@
 #include <Logger.hpp>
-#include <outputHandler/Netio.h>
-#include <thread>
-#include <unistd.h>
+#include <outputHandler/NetIo.h>
 
 using namespace slog;
 
 
 /**
- * Multithreaded execution
+ * Multi-threaded execution
  * @param id  simplified thread id.
  */
 void execute(uint id);
@@ -20,7 +18,7 @@ int main() {
   // Print information on whether zmq is found. If yes, initialize the network
   // logger.
 #ifdef FOUND_ZMQ
-  LOG().setStreamMethod(new outputHandler::Netio(true, true, 8001));
+  LOG().setStreamMethod(new outputHandler::NetIo(true, true, 8001));
   LOG(INFO) << "network logger found!" << std::endl;
 #else
   LOG(INFO) << "ZMQ not installed, fall back to standard io@" << "."
@@ -31,7 +29,8 @@ int main() {
 
   //
   // Threaded execution of logger and topic.
-  if (1) {
+  volatile bool testThreads = false;
+  if (testThreads) {
     const auto amount = 100;
     std::thread threads[amount];
     for (int i=0; i<amount; ++i) threads[i] = std::thread(execute,i+1);
@@ -90,7 +89,7 @@ void execute(uint id) {
           << "." << "." << "." << "." << "." << "." << "." << "." << "."
           << "." << "." << "." << "." << "." << "." << "." << "." << "."
           << "." << "." << "." << "." << "." << "." << "." << "." << "."
-          << "I forgot endline in the end!"
+          << "I forgot std::endl in the end!"
           << " That is managed by the Logger!";
     usleep(1);
   }
@@ -102,7 +101,7 @@ void execute(uint id) {
     Logger::enableTopic("time[" + std::to_string(i%4)  +"]" ,
                         nullptr, sizeof(int)*2 + i%50);
     TOPIC("someDisabledStuff.enabled?.not[0]", 2, 3);
-    for (auto i = 0; i < rand() % 10; i++)
+    for (auto _ = 0; _ < rand() % 10; _++)
       TOPIC("time[" + std::to_string(rand() % 5) + ")]", 2, 2);
     usleep(1);
 

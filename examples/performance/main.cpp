@@ -1,8 +1,8 @@
 #include <Logger.hpp>
-#include <outputHandler/Netio.h>
+#include <outputHandler/NetIo.h>
 #include <thread>
 #include <unistd.h>
-#include <Profiler.hpp>
+#include <executionHandler/Profiler.hpp>
 #include <muParser.h>
 
 using namespace slog;
@@ -11,7 +11,7 @@ using namespace slog;
 //XXX: 1: create Profiler, which offers one function that can be implemented.
 //
 
-#define ETW wrapper::Wrapper<mu::Parser, ExecutionTimeWrapper>
+#define ETW wrapper::Wrapper<mu::Parser>
 class ExecutionTimeWrapper : public wrapper::Profiler<mu::Parser> {
   public:
 
@@ -50,7 +50,7 @@ class ExecutionTimeWrapper : public wrapper::Profiler<mu::Parser> {
 };
 
 
-void evaluateFunction(ETW w, uint i) {
+void evaluateFunction(ETW &w, uint i) {
 
   double t = 0;
   w->DefineVar("t", &t);
@@ -58,9 +58,9 @@ void evaluateFunction(ETW w, uint i) {
 
   w->SetExpr("t^" + std::to_string(i*10) + " + sin(t) * 3.2");
   //for (auto i = 0; i < rand() % 255500; i++) {
-    for (auto i = 0; i < 255500; i++) {
+    for (auto k = 0; i < 255500; i++) {
 
-      auto j = i / 1000.;
+      auto j = k / 1000.;
       auto j2 = j + 1./2000.;
 
     TOPIC("nonsense", j, j2);
@@ -78,7 +78,7 @@ void info() {
 }
 void * get_pc () { return __builtin_return_address(0); }
 int main2 (){
-  void **array = (void**) malloc(8);
+  auto **array = (void**) malloc(8);
   array[0] = malloc(8);
   auto sz = 8;
   (void)sz;
@@ -112,7 +112,7 @@ int main(int argc, char const * const* const argv) {
   //
   //Check if zmq is installed. If not, exit.
 #ifdef FOUND_ZMQ
-  LOG().setStreamMethod(new outputHandler::Netio(true, true, 5555));
+  LOG().setStreamMethod(new outputHandler::NetIo(true, true, 5555));
   LOG(INFO) << "network logger found!" << std::endl;
 #else
   LOG(FATAL) << "Error, ZMQ is not installed, but required for this demo."
@@ -144,8 +144,9 @@ int main(int argc, char const * const* const argv) {
 
   auto amountThreads = 1;
   for (auto i = 1; i <= amountThreads; i++) {
-    mu::Parser* parser = new mu::Parser();
-    evaluateFunction(ExecutionTimeWrapper::create(parser, std::to_string(i)), i);
+    auto parser = new mu::Parser();
+    auto etw = ExecutionTimeWrapper::create(parser, std::to_string(i));
+    evaluateFunction(etw, i);
   }
   return 0;
 }

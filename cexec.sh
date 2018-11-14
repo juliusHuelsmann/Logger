@@ -11,6 +11,8 @@ fi
 # Check if ninja is available.
 which ninja &> /dev/null
 useMake=$?
+cmakeFlags="-BuildTests=ON"
+
 
 set -e 
 
@@ -19,11 +21,11 @@ cd build
 
 if [ $useMake -eq 0 ];then
   echo "I use ninja: $useNinja!"
-  cmake -G Ninja ..
+  cmake $cmakeFlags -G Ninja ..
   ninja -j5
 else 
   echo "I don't use ninja: $useNinja!"
-  cmake ..
+  cmake $cmakeFlags ..
   make -j5
 fi
 

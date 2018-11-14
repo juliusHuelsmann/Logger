@@ -1,9 +1,9 @@
 #ifndef _LOGGER_H_
 #define _LOGGER_H_
 
-#include <Constants.h>
 #include <outputHandler/OutputHandler.h>
-#include <outputHandler/Stdio.h>
+#include <outputHandler/StdIo.h>
+#include <Constants.h>
 
 #include <iostream>
 #include <sstream>
@@ -21,25 +21,11 @@
 
 namespace slog {
 
-#define LINE_PLOT "scatter"
-#define HISTOGRAM "histogram"
-#define SCATTER "points"
-#define INTERVAL "interval"
-
+#define LOG Logger::getInstance
+#define TOPIC(str, val, ...) \
+  Logger::topic(str, std::vector<typeof(val)>({val, __VA_ARGS__}));
 #define SUB_EQ(sub, str) str.size() >= sub.size() && \
   std::equal(sub.begin(), sub.begin()+sub.size(), str.begin())
-
-#define LOG Logger::getInstance
-  /*
-#define TOPIC(...) \
-  slog::Logger::topic(\
-  std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value-1, \
-        sizeof(__VA_ARGS__), __VA_ARGS__);
-        */
-
-#define TOPIC(str, val, ...) \
-  Logger::topic(str,\
-    std::vector<typeof(val)>({val, __VA_ARGS__}));
 
   typedef std::ostream& (*ManipFn)(std::ostream&);
   typedef std::ios_base& (*FlagsFn)(std::ios_base&);
@@ -53,13 +39,8 @@ namespace slog {
 
   private:
 
-    /**
-     * Count of the locks acquired by one thread.
-     */
-    static uint refCount;
-    static bool flushed;
 
-    struct UnlockMutexReturnHelper{
+    struct UnlockMutexReturnHelper{ //XXX: move back to mutexGuard
       ~UnlockMutexReturnHelper() {
         Logger::getInstance().mtx.unlock();
       }
@@ -77,16 +58,16 @@ namespace slog {
 
       MutexGuard(Logger* l): l(l) {
         // the first MutexGuard has to lock one times more
-        if (!l->refCount++) {
+        if (!l->mutexGuardCount++) {
           l->mtx.lock();
         }
       }
 
       ~MutexGuard() {
         l->mtx.unlock();
-        if (!--l->refCount) {
+        if (!--l->mutexGuardCount) {
           // 1) lock, 2) lock (in constructor), 3) unlock (here) 4) unlock (here)
-          if (!flushed) *this << std::endl;
+          if (!l->flushed) *this << std::endl;
           l->mtx.unlock();
         }
       }
@@ -110,19 +91,22 @@ namespace slog {
       Logger* l;
     };
 
-
-
+    /**
+     * Count of the mutex guards that are currently active for this instance 
+     * of a logger.
+     */
+    uint mutexGuardCount; //  friend MutexGuard; // XXX: friend scope.
+    bool flushed;
 
   public:
-
-
 
       /*
        * delete, copy, move constructors and assign operators
        */
       Logger(Logger const&) = delete;
       Logger(Logger&&) = delete;
-      Logger& operator=(Logger const&) = delete;
+      Logger& operator=(Logger const &) = delete;
+      Logger& operator=(Logger const &&) = delete;
       Logger& operator=(Logger &&) = delete;
 
       static Logger& getInstance() {
@@ -207,7 +191,6 @@ namespace slog {
         auto sub = std::vector<std::string>();
         Logger::subTopic(sub, topic);
 
-
         // sub topic configuration
         auto i = topic.find('[');
         std::string subTop = "";
@@ -220,7 +203,6 @@ namespace slog {
           subTop =  topic.substr(i+1, j-i-1);
           top = topic.substr(0,i) + topic.substr(j+1, topic.size());
         }
-
 
         // Initialize the context that is to be created with the base context.
         // Then go through the settings tree and apply the settings.
@@ -272,8 +254,6 @@ namespace slog {
         //auto thisId = std::this_thread::get_id();
         //std::cout << ":" << thisId << "";
 
-
-
         // erase the implicitly disabled topics that are descendants of the
         // now-enabled topic #topic.
         for (auto d = disabledTopics.begin(); d != disabledTopics.end();
@@ -318,8 +298,6 @@ namespace slog {
           }
         }
       }
-
-
 
       /**
        * 
@@ -380,10 +358,6 @@ namespace slog {
                  << topic->dataType
                  << topic->plotBufferSize;
 
-
-
-
-
         if (topic->memorySize <= sizeToAdd + topic->nextFreeIndex) {
           auto str = settings.str();
           auto vals = std::vector<std::pair<const char*, size_t>>();
@@ -404,9 +378,7 @@ namespace slog {
           memcpy(topic->els+topic->nextFreeIndex, vec.data(), sizeToAdd);
           topic->nextFreeIndex += sizeToAdd;
           assert(topic->nextFreeIndex < topic->memorySize);
-
         }
-
       }
 
       /*
@@ -414,7 +386,7 @@ namespace slog {
        */
       template<class T> MutexGuard operator<<(const std::vector<T>& output) {
         mtx.lock();
-        if (!refCount) start();
+        if (!mutexGuardCount) start();
         for (auto i = output.begin(); i != output.end(); ++i)
           sstream << *i;
         return MutexGuard(this);
@@ -425,7 +397,7 @@ namespace slog {
        */
       template<class T> MutexGuard operator<<(const T& output) {
         mtx.lock();
-        if (!refCount) start();
+        if (!mutexGuardCount) start();
         sstream << output;
         return MutexGuard(this);
       }
@@ -568,11 +540,9 @@ namespace slog {
 
       Logger(): logLevelCurrentMessage(INFO), logLevel(INFO), exitLevel(ERROR),
                 startString("") {
-        out = new outputHandler::Stdio();
+        out = new outputHandler::StdIo();
         this->msg = 0;
         this->baseContext.out = out;
-
-
       }
 
       virtual ~Logger() {
@@ -648,15 +618,8 @@ namespace slog {
       static std::unordered_map<std::string, char> types;
 
 
-
-
-
     friend MutexGuard;
-
   };
-
-
-
 }
 
 

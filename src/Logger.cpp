@@ -9,8 +9,6 @@ std::unordered_map<std::string, slog::topic::Context*>();
 std::unordered_map<std::string, bool> slog::Logger::disabledTopics =
 std::unordered_map<std::string, bool>();
 
-uint slog::Logger::refCount = 0;
-bool slog::Logger::flushed = false;
 uint slog::Logger::Mut::cntr = 0;
 std::unordered_map<std::string, char> slog::Logger::types = {
   {"char",'c'}, {"signed char", 'b'}, {"unsigned char", 'B'}, {"bool", '?'},
