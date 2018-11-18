@@ -1,21 +1,34 @@
-
 #include <Logger.hpp>
 
 
-slog::topic::Topic slog::Logger::topics = slog::topic::Topic();
-slog::topic::Context slog::Logger::baseContext = slog::topic::Context();
-std::unordered_map<std::string, slog::topic::Context*> slog::Logger::launchedTopics =
-std::unordered_map<std::string, slog::topic::Context*>();
-std::unordered_map<std::string, bool> slog::Logger::disabledTopics =
-std::unordered_map<std::string, bool>();
-
-uint slog::Logger::Mut::cntr = 0;
-std::unordered_map<std::string, char> slog::Logger::types = {
-  {"char",'c'}, {"signed char", 'b'}, {"unsigned char", 'B'}, {"bool", '?'},
-  {"short", 'h'}, {"unsigned short", 'H'},
-  {"int", 'i'}, {"unsigned int", 'I'},
-  {"long", 'l'}, {"unsigned long", 'L'},
-  {"long long", '1'}, {"unsigned long long", 'Q'},
-  {"float", 'f'}, {"double", 'd'}};
+slog::Logger::Logger(): Log(), Topics() {
+  this->setBaseContext(this->out);
+}
 
 
+void slog::Logger::setStreamMethod(
+    std::shared_ptr<outputHandler::OutputHandler> nOut) {
+  // The pointer to the outputHandler has to be defined.
+  // For disabling all logging use #setLogLevel.
+  assert(nOut.get());
+
+  Log::lock();
+  Topics::lock();
+  if (this->getBaseContext().out == this->out) this->setBaseContext(nOut);
+  this->out = nOut;
+
+  Topics::unlock();
+  Log::unlock();
+}
+
+
+slog::Logger& slog::Logger::getInstance() {
+  return getInstance(slog::LogLevel::INFO);
+}
+
+
+slog::Logger& slog::Logger::getInstance(slog::LogLevel e) {
+  static slog::Logger instance;
+  instance.logLevelCurrentMessage = e;
+  return instance;
+}

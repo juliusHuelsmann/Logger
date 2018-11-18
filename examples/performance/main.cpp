@@ -112,7 +112,9 @@ int main(int argc, char const * const* const argv) {
   //
   //Check if zmq is installed. If not, exit.
 #ifdef FOUND_ZMQ
-  LOG().setStreamMethod(new outputHandler::NetIo(true, true, 5555));
+  auto streamMethod = std::shared_ptr<outputHandler::OutputHandler>(
+      new outputHandler::NetIo(true, true, 5555));
+  LOG().setStreamMethod(streamMethod);
   LOG(INFO) << "network logger found!" << std::endl;
 #else
   LOG(FATAL) << "Error, ZMQ is not installed, but required for this demo."
@@ -126,9 +128,9 @@ int main(int argc, char const * const* const argv) {
   // this operation takes in miliseconds.
 
   LOG(INFO) << "This will run indefinetely. Evaluates functions" << std::endl;
-  Logger::enableTopic("execTime", nullptr, 100, "", "histogram");
-  Logger::enableTopic("nonsense"); // < live logging (without buffering)
-  Logger::enableTopic("nonsense[1]", nullptr, 0, "", "interval"); 
+  LOG().enableTopic("execTime", nullptr, 100, "", "histogram");
+  LOG().enableTopic("nonsense"); // < live logging (without buffering)
+  LOG().enableTopic("nonsense[1]", nullptr, 0, "", "interval");
 
   // create multiple threads.
   switch (argc)  {

@@ -5,9 +5,8 @@
 #ifdef FOUND_ZMQ
 
 #include <outputHandler/NetIo.h>
-
-#include <iostream>
 #include <sstream>
+
 
 slog::outputHandler::NetIo::NetIo(bool useSocket,
     bool useCli, uint port) : context(1), socket(context, ZMQ_PUB), 
@@ -18,12 +17,9 @@ slog::outputHandler::NetIo::NetIo(bool useSocket,
 }
 
 
-
-
-
-
 void slog::outputHandler::NetIo::handle(
-    std::vector<std::pair<const char*, size_t>> sts, slog::LogLevel msgLogLevel) {
+    std::vector<std::pair<const char*, size_t>> sts, 
+    slog::LogLevel msgLogLevel) {
 
   if (useCli) {
     auto stream = msgLogLevel >= slog::WARN ? &std::cerr : &std::cout;
@@ -39,11 +35,12 @@ void slog::outputHandler::NetIo::handle(
     zmq::message_t logMsg(sz);
     uint32_t idx = 0;
     for (auto k = sts.begin();
-         k != sts.end(); idx+= k->second, k++)
+        k != sts.end(); idx+= k->second, k++)
       memcpy((char*)logMsg.data() + idx, k->first, k->second);
     assert(idx==sz);
     socket.send(logMsg);
   }
 }
+
 
 #endif

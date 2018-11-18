@@ -4,6 +4,7 @@ project(logger VERSION 0.0.1.1 LANGUAGES CXX)
 
 
 
+
 # Check for the ZMQ module. If found, build the code with ZMQ support.
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
@@ -32,17 +33,20 @@ else()
   message("PkgConfig (optional):\tmissing")
 endif()
 
-# Build the libraries
-file(GLOB_RECURSE SRC ${PROJECT_SOURCE_DIR}/src/*.cpp)
-add_library(logger ${SRC})
-target_compile_definitions(logger PUBLIC ${PUBLIC_COMPILE})
-target_include_directories(logger PUBLIC ${PROJECT_SOURCE_DIR}/include PRIVATE ${ZeroMQ_INCLUDE_DIR})
-target_link_libraries(logger PRIVATE ${ZeroMQ_LIBRARY} pthread)
+
 
 # Build the tests
-
 OPTION(BuildTests "Build tests." ON)
 if (${BuildTests})
   add_subdirectory(test)
   add_subdirectory(examples)
 endif()
+
+# Build the libraries
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
+file(GLOB_RECURSE SRC ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/include/*.hpp)
+add_library(logger ${SRC})
+target_compile_definitions(logger PUBLIC ${PUBLIC_COMPILE})
+target_include_directories(logger PUBLIC ${PROJECT_SOURCE_DIR}/include PRIVATE ${ZeroMQ_INCLUDE_DIR})
+target_link_libraries(logger PRIVATE ${ZeroMQ_LIBRARY} pthread)
+
