@@ -147,10 +147,10 @@ template <typename T> void topic(std::string tIdent, std::vector<T> vec) {
   }
 }
 
-    protected:
 
       topic::Context const & getBaseContext() const;
 
+    protected:
 
     void lock();
 
