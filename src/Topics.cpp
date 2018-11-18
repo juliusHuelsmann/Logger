@@ -4,21 +4,19 @@
 
 #include <Topics.hpp>
 
-void slog::Topics::iterate(slog::topic::Topic* top, size_t sz, std::stringstream &sstr) {
+void slog::Topics::iterate(slog::topic::Topic* top, size_t sz, std::stringstream& sstr) {
   if (top->s) {
-    sstr << "(r)";
-    std:: cout << "(q)";
-    sz += 3;
+    sstr << "(w. config)" << std::flush;
+    sz += 11;
   }
+  uint it = 0;
   for (const auto c : top->sub) {
-    sstr << " -> " << c.first;
-    std:: cout << " -> " << c.first;
+    if (it++) sstr << "\n" << std::string(sz , ' ');
+    sstr <<  " -> " << c.first;
     iterate(c.second, sz + c.first.size() + 4, sstr);
-    sstr << std::string(" ", sz) << "\n";
-    std:: cout << std::string(" ", sz) << "\n";
-    std:: cout << std::endl;
     delete(c.second);
   }
+  std::cout << "<";
 }
 
 slog::Topics::~Topics() {
@@ -32,6 +30,7 @@ slog::Topics::~Topics() {
          c = launchedTopics.erase(c)) {
       info << c->first << (launchedTopics.size() == 1  ? "."  : ", ");
       logTopic(c->second);
+      delete(c->second);
     }
     info << "\nList of disabled topics: ";
     for (auto c = disabledTopics.begin(); disabledTopics.size();
@@ -39,13 +38,12 @@ slog::Topics::~Topics() {
       info << c->first << (disabledTopics.size() == 1  ? "."  : ", ");
     }
     info << "\nSettings tree:\n";
-    std::cout << std::endl;
     iterate(&topics, 0, info);
 
   } else {
     info << "\nThe nein.topics logger shut down unused.\n";
   }
-  //baseContext.out->handle(info.str().c_str(), slog::INFO);
+  baseContext.out->handle(info.str().c_str(), slog::INFO);
 }
 
 void slog::Topics::logTopic(slog::topic::Context* topic,
@@ -55,7 +53,7 @@ void slog::Topics::logTopic(slog::topic::Context* topic,
 
     // Generate settings prefix.
     auto settings = std::stringstream ();
-    settings << (unsigned char) 1
+    settings << (unsigned char) 2
              << (unsigned char) topic->topic.size()
              << topic->topic.c_str()
              << (unsigned char) topic->subTopic.size()
@@ -221,7 +219,7 @@ void slog::Topics::enableTopic(std::string topic,
         if (c.second->nextFreeIndex) // if contains content
           c.second->out->handle((const char*) c.second->els, INFO,
               (size_t) c.second->nextFreeIndex);
-        delete(c.second->els);
+        if (c.second->els) free(c.second->els);
         c.second->els = (char* ) malloc(c.second->memorySize);
         c.second->nextFreeIndex = 0;
       }

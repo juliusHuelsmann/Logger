@@ -13,6 +13,8 @@ namespace slog {
   namespace topic {
     struct Topic {
       Topic();
+      virtual ~Topic();
+
       std::unordered_map<std::string, Topic*> sub;
       Context* s;
     };

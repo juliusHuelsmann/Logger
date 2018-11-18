@@ -85,7 +85,7 @@ int main() {
   LOG().enableTopic("time" , nullptr, sizeof(int)*4);
   LOG().enableTopic("money" , nullptr, sizeof(int)*4);
   LOG().enableTopic("money.lending" , nullptr, sizeof(int)*4);
-  LOG().enableTopic("time[0].ente.." , nullptr, sizeof(int)*4);
+  LOG().enableTopic("time[0].ente.haus.not.explicitely.enabled" , nullptr, sizeof(int)*4);
   LOG().enableTopic("time.ente.." , nullptr, sizeof(int)*4);
 
 

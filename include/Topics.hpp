@@ -194,10 +194,10 @@ template <typename T> void topic(std::string tIdent, std::vector<T> vec) {
 
     inline void preprocessTopic(std::string& raw) {
       while(raw.find("..") != std::string::npos) boost::replace_all(raw, "..", ".");
-      while(raw.find(".]") != std::string::npos) boost::replace_all(raw, "].", "]");
+      while(raw.find("].") != std::string::npos) boost::replace_all(raw, "].", "]");
     }
 
-    void iterate(slog::topic::Topic* top, size_t sz, std::stringstream &sstr);
+    static void iterate(slog::topic::Topic* top, size_t sz, std::stringstream& sstr);
       /**
        *  Root of the settings tree, guaranteed to have an outputHandler
        *  configured.

@@ -6,4 +6,7 @@
 #include <topics/Topic.h>
 
 slog::topic::Topic::Topic(): sub(), s(nullptr) { }
+slog::topic::Topic::~Topic() {
+  if (s) delete(s);
+}
 
