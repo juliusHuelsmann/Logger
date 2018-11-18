@@ -36,7 +36,7 @@ endif()
 
 
 # Build the tests
-OPTION(BuildTests "Build tests." ON)
+OPTION(BuildTests "Build tests." OFF)
 if (${BuildTests})
   add_subdirectory(test)
   add_subdirectory(examples)
