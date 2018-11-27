@@ -35,12 +35,10 @@ namespace slog {
           ~MutexGuard();
 
           template<class T> MutexGuard operator<<(const std::vector<T>& m) {
-            l->flushed = false;
             return *l << m;
           }
 
           template<class T> MutexGuard operator<<(const T& m) {
-            l->flushed = false;
             return  *l<<m;
           }
 
@@ -63,6 +61,7 @@ namespace slog {
      */
     template<class T> MutexGuard operator<<(const std::vector<T>& output) {
       lock();
+        flushed = false;
       if (!mutexGuardCount) start();
       for (auto i = output.begin(); i != output.end(); ++i)
         sstream << *i;
@@ -74,6 +73,7 @@ namespace slog {
      */
     template<class T> MutexGuard operator<<(const T& output) {
       lock();
+      flushed = false;
       if (!mutexGuardCount) start();
       sstream << output;
       return MutexGuard(this);
