@@ -90,7 +90,8 @@ template <typename T> void topic(std::string tIdent, std::vector<T> vec) {
 
   const auto sizeType = sizeof(T);
   const auto sizeVec = vec.size();
-  const auto type = typeid(T).name()[0];
+  auto type = typeid(T).name()[0];
+  type = type == 'x' ? 'q': type; //XXX: fix this generally
 
   if (!launchedTopics.count(tIdent)) {
 
