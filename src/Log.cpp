@@ -17,8 +17,8 @@ void slog::Log::setLogLevel(LogLevel ll) {
 }
 
 
-slog::Log::Log(): logLevelCurrentMessage(INFO), out(new outputHandler::StdIo()),
-  logLevel(INFO), exitLevel(ERROR), startString(""), sstream(), msg(0), 
+slog::Log::Log(): logLevelCurrentMessage(LogLevel::INFO), out(new outputHandler::StdIo()),
+  logLevel(LogLevel::INFO), exitLevel(LogLevel::ERROR), startString(""), sstream(), msg(0),
   flushed(true), mutexGuardCount(0), mtx() {
     this->msg = 0;
 }
@@ -36,30 +36,33 @@ void slog::Log::unlock() {
 
 void slog::Log::start() {
   switch (this->logLevelCurrentMessage) {
-    case DEBUG:
+    case LogLevel::DEBUG:
       sstream << "DEBUG";
       break;
-    case INFO:
+    case LogLevel::INFO:
       sstream << "INFO ";
       break;
-    case WARN:
+    case LogLevel::INFO_RARE:
+      sstream << "INFO ";
+      break;
+    case LogLevel::WARN:
       sstream << "WARN ";
       break;
-    case ERROR:
+    case LogLevel::ERROR:
       sstream << "ERROR";
       break;
-    case FATAL:
+    case LogLevel::FATAL:
       sstream << "FATAL";
       break;
-    case NEVER:
+    case LogLevel::NEVER:
     default:
       sstream << "Fatal error occurred while logging a message: "
         << " Log level of message corrupted : "
-        << this->logLevelCurrentMessage
+        << static_cast<unsigned int>(this->logLevelCurrentMessage)
         << "\n\nOriginal message:\n";
 
       // ensure to exit
-      this->logLevelCurrentMessage  = NEVER;
+      this->logLevelCurrentMessage  = LogLevel::NEVER;
   }
   //prepend current time.
   auto now = std::time(nullptr);
@@ -88,8 +91,8 @@ void slog::Log::end() {
 
       std::stringstream error;
       error << "\n The logger-exit level is set to exit on messages of level "
-        << this->exitLevel << " or higher. \n Bye!\n";
-      out->handle(error.str().c_str(), INFO);
+        << static_cast<unsigned int >(this->exitLevel) << " or higher. \n Bye!\n";
+      out->handle(error.str().c_str(), LogLevel::INFO);
       std::exit(-1);
     }
   }
@@ -98,5 +101,5 @@ void slog::Log::end() {
   // provided) and clear + empty the string stream
   sstream.str( std::string() );
   sstream.clear();
-  this->logLevelCurrentMessage = INFO;
+  this->logLevelCurrentMessage = LogLevel::INFO;
 }

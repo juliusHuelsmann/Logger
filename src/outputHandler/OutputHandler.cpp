@@ -49,7 +49,7 @@ void slog::outputHandler::OutputHandler::logTopic(
 
     // write out and set the #nextFreeIndex to zero as all the values inside
     // the buffer have been written.
-    handle(vals, INFO);
+    handle(vals, LogLevel::INFO);
     topic->nextFreeIndex = 0;
   }
 }

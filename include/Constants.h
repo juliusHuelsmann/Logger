@@ -19,13 +19,14 @@ namespace slog {
   /*
    * Log levels
    */
-  enum LogLevel {
-    DEBUG=0,
-    INFO=1,
-    WARN=2,
-    ERROR=3,
-    FATAL=4,
-    NEVER=5
+  enum class LogLevel : unsigned int {
+    DEBUG,
+    INFO,
+    INFO_RARE,
+    WARN,
+    ERROR,
+    FATAL,
+    NEVER
   };
 }
 
