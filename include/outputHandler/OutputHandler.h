@@ -11,6 +11,9 @@
 
 
 namespace slog {
+    namespace topic {
+        class Context;
+    }
   namespace outputHandler {
     class OutputHandler {
 
@@ -28,6 +31,18 @@ namespace slog {
 
         virtual void handle(std::vector<std::pair<const char*, size_t>> sts,
             slog::LogLevel msgLogLevel) = 0;
+
+
+        /**
+         * Default handler for topic messages that can be overwritten by a class implements
+         * the outputHandler.
+         *
+         * @param context
+         * @param additionalData
+         * @param additionalSize
+         */
+        virtual void logTopic(topic::Context * context, const char* additionalData=nullptr,
+                              size_t additionalSize=0);
 
     };
   }

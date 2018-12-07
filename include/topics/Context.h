@@ -14,7 +14,8 @@
 namespace slog {
   namespace topic {
 
-    struct Context {
+    class Context {
+    public:
 
       /**
        * Constructor that is used in case a used context is created.

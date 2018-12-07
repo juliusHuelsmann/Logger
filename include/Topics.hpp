@@ -138,7 +138,7 @@ template <typename T> void topic(std::string tIdent, std::vector<T> vec) {
   // buffer has to be flushed
   const auto sizeToAdd = vec.size() * sizeof(T);
   if (topic->memorySize <= sizeToAdd + topic->nextFreeIndex) {
-    this->logTopic(topic, (const char*) vec.data(), (size_t) sizeToAdd);
+    topic->out->logTopic(topic, (const char*) vec.data(), (size_t) sizeToAdd);
   } else {
     //
     // write to buffer and increase buffer index.
@@ -159,8 +159,6 @@ template <typename T> void topic(std::string tIdent, std::vector<T> vec) {
 
     private:
 
-    void logTopic(topic::Context* context, const char* additionalData=nullptr,
-                  size_t additionalSize=0);
 
     /**
      * Utility method for computing the context for a given branch if enabled.

@@ -29,7 +29,7 @@ slog::Topics::~Topics() {
     for (auto c = launchedTopics.begin(); launchedTopics.size();
          c = launchedTopics.erase(c)) {
       info << c->first << (launchedTopics.size() == 1  ? "."  : ", ");
-      logTopic(c->second);
+      c->second->out->logTopic(c->second);
       delete(c->second);
     }
     info << "\nList of disabled topics: ";
@@ -41,48 +41,9 @@ slog::Topics::~Topics() {
     iterate(&topics, 0, info);
 
   } else {
-    info << "\nThe nein.topics logger shut down unused.\n";
+    info << "\nThe topics logger shut down unused.\n";
   }
   baseContext.out->handle(info.str().c_str(), slog::INFO);
-}
-
-void slog::Topics::logTopic(slog::topic::Context* topic,
-                            const char* additionalData, size_t additionalSize) {
-  assert(topic->out);
-  if (additionalSize || topic->nextFreeIndex) {
-
-    // Generate settings prefix.
-    auto settings = std::stringstream ();
-    settings << (unsigned char) 2
-             << (unsigned char) topic->topic.size()
-             << topic->topic.c_str()
-             << (unsigned char) topic->subTopic.size()
-             << topic->subTopic.c_str()
-             << (unsigned char) topic->plotStyle.size()
-             << topic->plotStyle
-             << topic->amount
-             << topic->typeSize
-             << topic->dataType
-             << topic->plotBufferSize;
-
-    // generate vector that conatains the stuff to be sent over the network.
-    auto str = settings.str();
-    auto vals = std::vector<std::pair<const char*, size_t>>();
-    vals.push_back(std::make_pair(str.c_str(), str.size()));
-
-    // If there is content that resides inside the buffer, add it to the vector
-    if (topic->nextFreeIndex) vals.push_back(std::make_pair(
-          topic->els, (size_t) topic->nextFreeIndex));
-
-    if (additionalSize)
-      vals.push_back(std::make_pair(additionalData, additionalSize));
-
-    // write out and set the #nextFreeIndex to zero as all the values inside
-    // the buffer have been written.
-    topic->out->handle(vals, INFO);
-    topic->nextFreeIndex = 0;
-  }
-
 }
 
 
@@ -217,8 +178,8 @@ void slog::Topics::enableTopic(std::string topic,
 
       if (memSizePrior != memSizeAfter) {
         if (c.second->nextFreeIndex) // if contains content
-          c.second->out->handle((const char*) c.second->els, INFO,
-              (size_t) c.second->nextFreeIndex);
+          c.second->out->logTopic(c.second,
+                                  (const char*) c.second->els, (size_t) c.second->nextFreeIndex);
         if (c.second->els) free(c.second->els);
         c.second->els = (char* ) malloc(c.second->memorySize);
         c.second->nextFreeIndex = 0;
