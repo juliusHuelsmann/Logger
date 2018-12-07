@@ -53,8 +53,8 @@ void slog::outputHandler::FileLogger::logTopic(slog::topic::Context * topic,
       uint64_t idx = 0;
       for (uint64_t  line = 0; line < amountLines; line++) {
         for (uint64_t col = 0; col < topic->amount; col++) {
-          idx += topic->typeSize;
           handle << (col ? "\t" : "") <<   *((LogType*) &vector[idx]) << col;
+          idx += topic->typeSize;
         }
         handle << "\n";
       }
