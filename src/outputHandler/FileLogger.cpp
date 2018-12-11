@@ -27,7 +27,7 @@ slog::outputHandler::FileLogger::FileLogger(std::string rootDir): rootDir(rootDi
 }
 
 slog::outputHandler::FileLogger::~FileLogger() {
-  for (auto k = fileHandles.begin(); fileHandles.size(); k = fileHandles.erase(k))
+  for (auto k = fileHandles.begin(); !fileHandles.empty(); k = fileHandles.erase(k))
       k->second.close();
 
 }
