@@ -7,6 +7,7 @@ project(logger VERSION 0.0.1.1 LANGUAGES CXX)
 
 # Check for the ZMQ module. If found, build the code with ZMQ support.
 find_package(PkgConfig REQUIRED)
+find_package(Boost REQUIRED)
 find_package(Threads REQUIRED)
 
 if (${PKG_CONFIG_FOUND})
@@ -48,5 +49,5 @@ file(GLOB_RECURSE SRC ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/incl
 add_library(logger ${SRC})
 target_compile_definitions(logger PUBLIC ${PUBLIC_COMPILE})
 target_include_directories(logger PUBLIC ${PROJECT_SOURCE_DIR}/include PRIVATE ${ZeroMQ_INCLUDE_DIR})
-target_link_libraries(logger PRIVATE ${ZeroMQ_LIBRARY} pthread)
+target_link_libraries(logger PRIVATE ${ZeroMQ_LIBRARY} pthread ${Boost_LIBRARIES})
 

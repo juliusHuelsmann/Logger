@@ -13,8 +13,9 @@
 typedef std::ostream& (*ManipFn)(std::ostream&);
 typedef std::ios_base& (*FlagsFn)(std::ios_base&);
 
-namespace slog {
+//#define SLOG(a) GLOG((unsigned int)static_cast<unsigned int>(a)/2)
 
+namespace slog {
 
   /*
    * Log levels
@@ -25,6 +26,7 @@ namespace slog {
     INFO_RARE,
     WARN,
     ERROR,
+    SEVERE,
     FATAL,
     NEVER
   };
