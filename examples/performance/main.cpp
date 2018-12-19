@@ -52,7 +52,7 @@ class ExecutionTimeWrapper : public wrapper::Profiler<mu::Parser> {
 
 void evaluateFunction(ETW &w, uint i) {
 
-  double t = 0;
+  long double t = 0;
   w->DefineVar("t", &t);
 
 
