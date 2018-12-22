@@ -2,7 +2,7 @@
 #define _LOG_HPP_
 
 #include <outputHandler/OutputHandler.h>
-#include <Constants.h>
+#include <SlogConstants.h>
 
 #include <vector>
 #include <memory>

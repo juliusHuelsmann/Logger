@@ -43,7 +43,7 @@ slog::Topics::~Topics() {
   } else {
     info << "\nThe topics logger shut down unused.\n";
   }
-  baseContext.out->handle(info.str().c_str(), slog::LogLevel::INFO);
+  baseContext.out->handle(info.str().c_str(), LogLevel::INFO);
 }
 
 

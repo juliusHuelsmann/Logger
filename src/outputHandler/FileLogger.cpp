@@ -32,15 +32,22 @@ slog::outputHandler::FileLogger::~FileLogger() {
 
 }
 
-void slog::outputHandler::FileLogger::handle(std::vector<std::pair<const char*, size_t>>,
-                                             slog::LogLevel ) { }
+void slog::outputHandler::FileLogger::handle(std::vector<std::pair<const char*, size_t>>, 
+    LogLevel) { }
 
 
 void slog::outputHandler::FileLogger::logTopic(slog::topic::Context * topic,
                                                   const char* additionalData,
                                                   size_t additionalSize) {
   assert(topic->out.get() == this);
-  assert(topic->typeSize == sizeof(LogType));
+  if (topic->typeSize != sizeof(LogType)) {
+
+    std::cerr << "Error: logging values of tyle other than long long is currently not supported;\n"
+              << "Automatic detection of the type will be added soon.\n" 
+              << "For now, please change to logging only long long values. Bye."
+              << std::endl;
+    assert(topic->typeSize == sizeof(LogType));
+  }
   if (!fileHandles.count(topic->topic)) {
     fileHandles.insert(std::make_pair(topic->topic, std::ofstream()));
     fileHandles[topic->topic].open(rootDir + topic->topic);

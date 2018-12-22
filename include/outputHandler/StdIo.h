@@ -16,7 +16,7 @@ namespace slog {
          * print to standard out / standard err.
          */
         virtual void handle( std::vector<std::pair<const char*, size_t>> sts,
-                             slog::LogLevel msgLogLevel) override;
+                             LogLevel msgLogLevel) override;
 
 
     };

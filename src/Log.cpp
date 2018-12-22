@@ -45,7 +45,7 @@ void slog::Log::start() {
     case LogLevel::INFO_RARE:
       sstream << "INFO ";
       break;
-    case LogLevel::WARN:
+    case LogLevel::WARNING:
       sstream << "WARN ";
       break;
     case LogLevel::ERROR:

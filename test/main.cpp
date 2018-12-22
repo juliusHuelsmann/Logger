@@ -99,7 +99,7 @@ void execute(uint id) {
 
   // set default levels.
   LOG().setLogLevel(LogLevel::INFO);
-  LOG().setExitLevel(LogLevel::WARN);
+  LOG().setExitLevel(LogLevel::WARNING);
 
   // show that the log operation is not interrupted, even if the operator '<<'
   // is used and the input is not explicitly terminated.

@@ -23,11 +23,11 @@ void slog::Logger::setStreamMethod(
 
 
 slog::Logger& slog::Logger::getInstance() {
-  return getInstance(slog::LogLevel::INFO);
+  return getInstance(LogLevel::INFO);
 }
 
 
-slog::Logger& slog::Logger::getInstance(slog::LogLevel e) {
+slog::Logger& slog::Logger::getInstance(LogLevel e) {
   static slog::Logger instance;
   instance.logLevelCurrentMessage = e;
   return instance;
