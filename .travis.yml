@@ -1,5 +1,9 @@
 language: c++
 
+compiler:
+  #  - clang
+  - g++-8
+
 os: linux
 
 script:
