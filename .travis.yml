@@ -2,7 +2,7 @@ language: c++
 
 compiler:
   #  - clang
-  - g++-7
+  - g++
 
 os: linux
 
@@ -13,7 +13,7 @@ git:
   submodules: false
 
 before_install:
-  - sudo apt-get install -y libboost-dev
+  - sudo apt-get install -y libboost-all-dev
   - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
   - git submodule update --init --recursive
 
