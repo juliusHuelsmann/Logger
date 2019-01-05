@@ -19,6 +19,6 @@ before_install:
 
 branches:
   only:
-    -master
+    - master
 
 
