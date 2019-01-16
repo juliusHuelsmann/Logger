@@ -5,6 +5,7 @@
 #ifndef _NETWORK_LOGGER_
 #define _NETWORK_LOGGER_
 #ifdef FOUND_ZMQ
+#define NET_IO_REALIZED
 
 #include <outputHandler/OutputHandler.h>
 
@@ -30,7 +31,7 @@ namespace slog {
        * print to standard out / standard err.
        */
       virtual void handle( std::vector<std::pair<const char*, size_t>> sts,
-                   slog::LogLevel msgLogLevel) override;
+                   LogLevel msgLogLevel) override;
 
 
     private:

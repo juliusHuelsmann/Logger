@@ -12,9 +12,9 @@
 namespace slog {
 
 
-#define LOG Logger::getInstance
+#define LOG slog::Logger::getInstance
 #define TOPIC(str, val, ...)                                                   \
-  Logger::getInstance().topic(                                                 \
+  slog::Logger::getInstance().topic(                                                 \
     str,                                                                       \
     std::vector<std::remove_const_t<typeof(val)>>({val, __VA_ARGS__}));
     //std::vector<std::remove_const<decltype(val)>>({val, __VA_ARGS__}));

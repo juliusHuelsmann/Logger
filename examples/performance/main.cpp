@@ -52,7 +52,7 @@ class ExecutionTimeWrapper : public wrapper::Profiler<mu::Parser> {
 
 void evaluateFunction(ETW &w, uint i) {
 
-  double t = 0;
+  long double t = 0;
   w->DefineVar("t", &t);
 
 
@@ -115,9 +115,9 @@ int main(int argc, char const * const* const argv) {
   auto streamMethod = std::shared_ptr<outputHandler::OutputHandler>(
       new outputHandler::NetIo(true, true, 5555));
   LOG().setStreamMethod(streamMethod);
-  LOG(INFO) << "network logger found!" << std::endl;
+  LOG(LogLevel::INFO) << "network logger found!" << std::endl;
 #else
-  LOG(FATAL) << "Error, ZMQ is not installed, but required for this demo."
+  LOG(LogLevel::FATAL) << "Error, ZMQ is not installed, but required for this demo."
             << std::endl;
   return -1;
 #endif
@@ -127,7 +127,7 @@ int main(int argc, char const * const* const argv) {
   // Create three kinds of different functions and measure the time that
   // this operation takes in miliseconds.
 
-  LOG(INFO) << "This will run indefinetely. Evaluates functions" << std::endl;
+  LOG(LogLevel::INFO) << "This will run indefinetely. Evaluates functions" << std::endl;
   LOG().enableTopic("execTime", nullptr, 100, "", "histogram");
   LOG().enableTopic("nonsense"); // < live logging (without buffering)
   LOG().enableTopic("nonsense[1]", nullptr, 0, "", "interval");
@@ -138,7 +138,7 @@ int main(int argc, char const * const* const argv) {
     case 1:
       break;
     default:
-      LOG(FATAL) << "Error, I do not know what to do with >3 arguments\n";
+      LOG(LogLevel::FATAL) << "Error, I do not know what to do with >3 arguments\n";
 
   }
 

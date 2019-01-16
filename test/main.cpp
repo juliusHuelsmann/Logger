@@ -22,12 +22,12 @@ int main() {
   auto sm = std::shared_ptr<outputHandler::OutputHandler>
     (new outputHandler::NetIo(true, true, 8001));
   LOG().setStreamMethod(sm);
-  LOG(INFO) << "network logger found!" << std::endl;
+  LOG(LogLevel::INFO) << "network logger found!" << std::endl;
 #else
-  LOG(INFO) << "ZMQ not installed, fall back to standard io@" << "."
+  LOG(LogLevel::INFO) << "ZMQ not installed, fall back to standard io@" << "."
             << std::endl;
 #endif
-  LOG(INFO) << "neu" << std::endl;
+  LOG(LogLevel::INFO) << "neu" << std::endl;
 
 
   //
@@ -98,8 +98,8 @@ void execute(uint id) {
   std::cout << std::numeric_limits<ushort>::max() << "\n";
 
   // set default levels.
-  LOG().setLogLevel(INFO);
-  LOG().setExitLevel(WARN);
+  LOG().setLogLevel(LogLevel::INFO);
+  LOG().setExitLevel(LogLevel::WARNING);
 
   // show that the log operation is not interrupted, even if the operator '<<'
   // is used and the input is not explicitly terminated.

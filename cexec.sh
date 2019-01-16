@@ -11,7 +11,8 @@ fi
 # Check if ninja is available.
 which ninja &> /dev/null
 useMake=$?
-cmakeFlags="-BuildTests=ON"
+useMake=1
+cmakeFlags="-DBuildTests=ON"
 
 
 set -e 

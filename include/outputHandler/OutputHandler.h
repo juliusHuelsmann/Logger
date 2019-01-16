@@ -2,7 +2,7 @@
 #ifndef _OUTPUT_HANDLER_H
 #define _OUTPUT_HANDLER_H
 
-#include <Constants.h>
+#include <SlogConstants.h>
 
 #include <string>
 #include <unordered_map>
@@ -30,7 +30,7 @@ namespace slog {
           final;
 
         virtual void handle(std::vector<std::pair<const char*, size_t>> sts,
-            slog::LogLevel msgLogLevel) = 0;
+            LogLevel msgLogLevel) = 0;
 
 
         /**

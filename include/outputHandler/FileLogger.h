@@ -27,7 +27,7 @@ namespace slog {
 
       virtual void handle(
             std::vector<std::pair<const char*, size_t>> sts,
-            slog::LogLevel msgLogLevel) override;
+            LogLevel msgLogLevel) override;
 
 
         void logTopic(topic::Context * context, const char* additionalData=nullptr,

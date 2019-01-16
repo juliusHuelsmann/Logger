@@ -1,5 +1,5 @@
-#ifndef _LOG_CONST_H_
-#define _LOG_CONST_H_
+#ifndef _SLOG_CONST_H_
+#define _SLOG_CONST_H_
 
 #include <iostream>
 
@@ -13,23 +13,23 @@
 typedef std::ostream& (*ManipFn)(std::ostream&);
 typedef std::ios_base& (*FlagsFn)(std::ios_base&);
 
-namespace slog {
+//#define SLOG(a) GLOG((unsigned int)static_cast<unsigned int>(a)/2)
 
 
-  /*
-   * Log levels
-   */
-  enum class LogLevel : unsigned int {
-    DEBUG,
-    INFO,
-    INFO_RARE,
-    WARN,
-    ERROR,
-    FATAL,
-    NEVER
-  };
-}
+/*
+ * Log levels
+ */
+enum class LogLevel : unsigned int {
+  DEBUG,
+  INFO,
+  INFO_RARE,
+  WARNING,
+  ERROR,
+  SEVERE,
+  FATAL,
+  NEVER
+};
 
 
-#endif // _LOG_CONST_H_
+#endif // _SLOG_CONST_H_
 

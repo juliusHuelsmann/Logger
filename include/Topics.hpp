@@ -4,7 +4,7 @@
 
 #include <outputHandler/OutputHandler.h>
 #include <outputHandler/StdIo.h>
-#include <Constants.h>
+#include <SlogConstants.h>
 #include <guard/MutexReturn.h>
 #include <topics/Topic.h>
 

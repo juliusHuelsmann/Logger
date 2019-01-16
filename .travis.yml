@@ -1,0 +1,28 @@
+language: c++
+
+compiler:
+  #  - clang
+  - g++
+
+os: linux
+
+script:
+  ./cexec.sh
+
+git:
+  submodules: false
+
+before_install:
+  - sudo apt-get install -y libboost-all-dev
+  - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+  - git submodule update --init --recursive
+
+addons:
+  apt:
+    update: true
+
+branches:
+  only:
+    - master
+
+
