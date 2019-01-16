@@ -43,7 +43,7 @@ if (${BuildTests})
 endif()
 
 # Build the libraries
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
 file(GLOB_RECURSE SRC ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/include/*.hpp)
 add_library(logger ${SRC})
 target_compile_definitions(logger PUBLIC ${PUBLIC_COMPILE})

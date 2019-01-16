@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(performanceChecker CXX)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wall -pedantic -Werror -g")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wall -pedantic -g")
 
 add_executable(performanceChecker ${PROJECT_SOURCE_DIR}/main.cpp)
 

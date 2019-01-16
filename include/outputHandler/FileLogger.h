@@ -30,8 +30,8 @@ namespace slog {
             slog::LogLevel msgLogLevel) override;
 
 
-        virtual void logTopic(topic::Context * context, const char* additionalData=nullptr,
-                              size_t additionalSize=0);
+        void logTopic(topic::Context * context, const char* additionalData=nullptr,
+                              size_t additionalSize=0) override;
 
     private:
         /**
