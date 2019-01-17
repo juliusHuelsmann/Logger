@@ -13,11 +13,16 @@ namespace slog {
 
 
 #define LOG slog::Logger::getInstance
-#define TOPIC(str, val, ...)                                                   \
-  slog::Logger::getInstance().topic(                                                 \
-    str,                                                                       \
-    std::vector<std::remove_const_t<typeof(val)>>({val, __VA_ARGS__}));
+
+
+
+
+/*define TOPIC(str, val, ...)
+  slog::Logger::getInstance().topic(
+    str,
+    std::vector<std::remove_const_t<decltype(val)>>({val, __VA_ARGS__}));
     //std::vector<std::remove_const<decltype(val)>>({val, __VA_ARGS__}));
+    */
 
 
   /**
@@ -72,5 +77,18 @@ namespace slog {
   };
 }
 
+
+
+//template <typename ...A> constexpr std::array<decltype(a), sizeof...(A)> pcarray(A const & ... a) { return {{(a)...}};kk }
+
+template <typename A> auto constexpr lazy(A const &a) {
+    return std::vector<A>{a};
+}
+template <typename A, typename ...B> auto constexpr lazy(A const &a, B const &...b) {
+    return std::vector<A>{a, b...};
+}
+template <typename A, typename ...B> void constexpr TOPIC(A const &a, B const &...b) {
+    slog::Logger::getInstance().topic(a, lazy(b...));
+}
 
 #endif // _LOGGER_H_
