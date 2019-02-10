@@ -1,3 +1,4 @@
+#define LOG slog::Logger::getInstance
 #ifndef _LOGGER_H_
 #define _LOGGER_H_
 
@@ -12,7 +13,6 @@
 namespace slog {
 
 
-#define LOG slog::Logger::getInstance
 
 
 
