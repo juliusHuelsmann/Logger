@@ -19,6 +19,12 @@ void slog::Topics::iterate(slog::topic::Topic* top, size_t sz, std::stringstream
   std::cout << "<";
 }
 
+void slog::Topics::flush() {
+  for (auto c : launchedTopics) {
+    c.second->out->logTopic(c.second);
+  }
+}
+
 slog::Topics::~Topics() {
 
   auto info = std::stringstream();

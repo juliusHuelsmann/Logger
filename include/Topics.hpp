@@ -69,6 +69,9 @@ namespace slog {
                  unsigned char plotBufferSize=0);
 
 
+      void flush();
+
+
       /**
        * Log values provided in #vec via outputStream provided by the topic
        * configuration iferred from #tIdent.
