@@ -71,6 +71,7 @@ void slog::outputHandler::FileLogger::logTopic(slog::topic::Context * topic,
   // if there is something in the buffer
   if (topic->nextFreeIndex) process(topic->els, topic->nextFreeIndex, fileHandles[topic->topic]);
   if (additionalSize) process(additionalData, additionalSize, fileHandles[topic->topic]);
+  fileHandles[topic->topic] << std::flush;
   topic->nextFreeIndex = 0;
 
 }
