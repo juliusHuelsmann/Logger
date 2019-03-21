@@ -56,6 +56,10 @@ void slog::outputHandler::FileLogger::logTopic(slog::topic::Context * topic,
       assert(size % topic->typeSize == 0);
       const auto amountOfEntries =  (uint64_t) (size / topic->typeSize);//rows*cols
       assert(amountOfEntries % topic->amount== 0);
+      if (topic->amount == 0) {
+        std::cerr <<   "error: amount topic is 0\n";
+        return;
+      }
       const auto amountLines = (uint64_t) amountOfEntries / topic->amount;
       uint64_t idx = 0;
       for (uint64_t  line = 0; line < amountLines; line++) {

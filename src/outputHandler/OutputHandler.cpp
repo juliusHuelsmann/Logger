@@ -38,14 +38,13 @@ void slog::outputHandler::OutputHandler::logTopic(
     // generate vector that conatains the stuff to be sent over the network.
     auto str = settings.str();
     auto vals = std::vector<std::pair<const char*, size_t>>();
-    vals.push_back(std::make_pair(str.c_str(), str.size()));
+    vals.emplace_back(str.c_str(), str.size());
 
     // If there is content that resides inside the buffer, add it to the vector
-    if (topic->nextFreeIndex) vals.push_back(std::make_pair(
-            topic->els, (size_t) topic->nextFreeIndex));
+    if (topic->nextFreeIndex) vals.emplace_back(topic->els, (size_t) topic->nextFreeIndex);
 
     if (additionalSize)
-      vals.push_back(std::make_pair(additionalData, additionalSize));
+      vals.emplace_back(additionalData, additionalSize);
 
     // write out and set the #nextFreeIndex to zero as all the values inside
     // the buffer have been written.
