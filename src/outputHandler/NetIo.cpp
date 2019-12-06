@@ -5,7 +5,9 @@
 #ifdef FOUND_ZMQ
 
 #include <outputHandler/NetIo.h>
+
 #include <sstream>
+#include <iterator>
 
 
 slog::outputHandler::NetIo::NetIo(bool useSocket,
