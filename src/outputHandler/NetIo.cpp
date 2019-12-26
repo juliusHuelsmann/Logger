@@ -9,15 +9,11 @@
 #include <sstream>
 #include <iterator>
 
-
-slog::outputHandler::NetIo::NetIo(bool useSocket,
-    bool useCli, uint port) : context(1), socket(context, ZMQ_PUB), 
-    connection(std::string("tcp://*:") + std::to_string(port)) {
-  this->useNetwork = useSocket;
-  this->useCli = useCli;
+slog::outputHandler::NetIo::NetIo(bool useSocket, bool useCli, uint port) noexcept
+    : connection(std::move(std::string("tcp://*:") + std::to_string(port))), useNetwork(useSocket),
+      useCli(useCli) {
   socket.bind(connection.c_str());
 }
-
 
 void slog::outputHandler::NetIo::handle(
     std::vector<std::pair<const char*, size_t>> sts, 
@@ -40,7 +36,7 @@ void slog::outputHandler::NetIo::handle(
         k != sts.end(); idx+= k->second, k++)
       memcpy((char*)logMsg.data() + idx, k->first, k->second);
     assert(idx==sz);
-    socket.send(logMsg);
+    socket.send(std::move(logMsg));
   }
 }
 

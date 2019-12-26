@@ -25,7 +25,7 @@ namespace slog {
        * @param typeSize
        */
       Context(unsigned char amount, unsigned char typeSize, char dataType,
-              std::string topic, std::string sub);
+              std::string topic, std::string sub) noexcept;
 
       /*
        * Constructors used for property inheritance
@@ -34,7 +34,7 @@ namespace slog {
       Context(std::shared_ptr<outputHandler::OutputHandler> out = nullptr,
           uint memorySize = 0,
           std::string topicPrefix = "", std::string plotStyle="",
-          const unsigned char plotBufferSize=0);
+          uint64_t plotBufferSize=0) noexcept;
 
       /**
        * Assignment operator: copies
@@ -59,11 +59,11 @@ namespace slog {
       /**
        *  Output handler is only used
        */
-      std::shared_ptr<outputHandler::OutputHandler> out;
-      uint memorySize;
-      std::string topicPrefix;
-      std::string plotStyle;
-      unsigned char plotBufferSize;
+      std::shared_ptr<outputHandler::OutputHandler> out {nullptr};
+      uint memorySize = 0;
+      std::string topicPrefix = "";
+      std::string plotStyle = "";
+      uint64_t plotBufferSize = 0;
 
       /**
        * Topic identifier without #subTopic.
@@ -71,7 +71,7 @@ namespace slog {
        * "execTime.math.uint"  in full topic name "execTime.math[standard].uint"
        *
        */
-      const std::string topic;
+      const std::string topic = "";
 
       /**
        * Sub topic identifier e.g.
@@ -79,16 +79,16 @@ namespace slog {
        * "standard"            in full topic name "execTime.math[standard].uint"
        * "1standard"           in full topic name "execTime[1].math[standard]"
        */
-      const std::string subTopic;
+      const std::string subTopic = "";
 
       //
       // Not inherited
       //
-      uint nextFreeIndex;
-      char* els;
-      const unsigned char amount;
-      const unsigned char typeSize;
-      const char dataType;
+      uint nextFreeIndex = 0;
+      char* els = nullptr;
+      const unsigned char amount = 0;
+      const unsigned char typeSize = 0;
+      const char dataType = ' ';
     };
   }
 }

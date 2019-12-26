@@ -66,7 +66,7 @@ namespace slog {
                  std::shared_ptr<outputHandler::OutputHandler> out= nullptr,
                  uint memorySize=0, std::string topicPrefix="",
                  std::string plotStyle=LINE_PLOT,
-                 unsigned char plotBufferSize=0);
+                 uint64_t plotBufferSize=0);
 
 
       void flush();

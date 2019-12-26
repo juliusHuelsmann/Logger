@@ -144,7 +144,7 @@ void slog::Topics::recomputeSettings(const std::string& topicRaw,
 void slog::Topics::enableTopic(std::string topic,
     std::shared_ptr<outputHandler::OutputHandler> out, uint memorySize,
     std::string topicPrefix, std::string plotStyle,
-    unsigned char plotBufferSize) {
+    uint64_t plotBufferSize) {
 
   lock();
   volatile MutexReturn mr(this);

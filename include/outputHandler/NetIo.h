@@ -19,28 +19,41 @@ namespace slog {
 
     public:
 
-      NetIo(bool useNetwork=true, bool useCli=true, uint port=8000);
+      explicit NetIo(bool useNetwork=true, bool useCli=true, uint port=8000) noexcept;
 
       /**
        * Socket is closed in the default socket destructor.
        */
-      virtual ~NetIo() = default;
+      ~NetIo() override {
+        try {
+          socket.close();
+        } catch (...) {
+
+        }
+        try {
+          context.close();
+        } catch (...) {
+          // ignore
+        }
+      }
 
       /**
        * This function handles a way to deal with messages:
        * print to standard out / standard err.
        */
-      virtual void handle( std::vector<std::pair<const char*, size_t>> sts,
+      void handle( std::vector<std::pair<const char*, size_t>> sts,
                    LogLevel msgLogLevel) override;
 
 
     private:
-      zmq::context_t context;
-      zmq::socket_t socket;
-      const std::string connection;
+      zmq::context_t context{1};
+      zmq::socket_t socket{context, ZMQ_PUB};
 
-      bool useNetwork;
-      bool useCli;
+      std::string const connection;
+
+      bool const useNetwork;
+
+      bool const useCli;
 
     };
   }

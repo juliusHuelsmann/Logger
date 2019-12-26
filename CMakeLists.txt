@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.5)
 project(logger VERSION 0.0.1.1 LANGUAGES CXX)
 
 
-
-
 # Check for the ZMQ module. If found, build the code with ZMQ support.
 find_package(PkgConfig REQUIRED)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
@@ -43,6 +41,7 @@ if (${BuildTests})
   add_subdirectory(test)
   add_subdirectory(examples)
 endif()
+set(CMAKE_CXX_STANDARD 20)
 
 
 
