@@ -7,6 +7,7 @@
 // Identifiers used in the front end for plotting.
 #define LINE_PLOT "scatter"
 #define HISTOGRAM "histogram"
+#define BARCHART "bar"
 #define SCATTER "points"
 #define INTERVAL "interval"
 
